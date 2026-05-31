@@ -31,7 +31,7 @@ window.addEventListener('load', function() {
   // ==========================================================================
   if (!roomHash) {
     // --- PLAYER 1 (Lobby Creator / Host) ---
-    roomHash = 'swat-' + Math.random().toString(36).substring(2, 9);
+    roomHash = Math.random().toString(36).substring(2, 9);
     window.location.hash = roomHash;
     
     peer = new Peer(roomHash);
