@@ -10,35 +10,31 @@ window.addEventListener('load', function() {
   const totalCells = columns * rows;
 
   let peer = null;
-  // Track all connected peers instead of just one
-  let activeConnections = [];
+  let connection = null; // Stays null initially for mesh mapping loops
   let draggedToken = null;
   let isSupplyToken = false;
 
-  // Read the room ID from the link hash
-  let targetPeerId = window.location.hash.substring(1);
-
-  const copyBtn = document.getElementById('copy-link-btn');
-  const statusText = document.getElementById('link-status');
-  // ==========================================================================
-  // 4-PLAYER MESH NETWORKING PROFILE WITH AUTO-ROSTER SHARING
-  // ==========================================================================
-  const guideCard = document.querySelector('.guide-panel');
-  
-  // Track multiple live connections simultaneously
+  // Track multiple live connections simultaneously in our roster array
   let activeConnections = [];
   
-  // Track the shared room ID anchor name from the URL hash
+  // Read the room ID from the link hash
   let roomHash = window.location.hash.substring(1);
   let myRole = 'defense-1'; // Default role assumption
 
+  const copyBtn = document.getElementById('copy-link-btn');
+  const statusText = document.getElementById('link-status');
+
+  // FIXED: Safety check to find the panel anywhere inside your sidebar wrappers
+  const guideCard = document.querySelector('.guide-panel') || document.querySelector('.guide-sidebar-wrapper .guide-panel');
+
+  // ==========================================================================
+  // 4-PLAYER MESH NETWORKING INITIALIZATION
+  // ==========================================================================
   if (!roomHash) {
     // --- PLAYER 1 (Lobby Creator / Host) ---
-    // Create a random room seed anchor and lock it into the URL
     roomHash = 'swat-' + Math.random().toString(36).substring(2, 9);
     window.location.hash = roomHash;
     
-    // Connect to the network using the room hash as the ID
     peer = new Peer(roomHash);
     myRole = 'defense-1';
     
@@ -47,17 +43,17 @@ window.addEventListener('load', function() {
     });
   } else {
     // --- GUESTS (Players 2, 3, and 4) ---
-    // Connect with a completely random ID so multiple tabs don't clash on one computer
     peer = new Peer();
     
     peer.on('open', () => {
       statusText.innerText = "Connecting to lobby mesh...";
       
-      // Dial straight into the Host using the roomHash from the URL
       const hostConn = peer.connect(roomHash);
       setupConnectionListeners(hostConn);
     });
   }
+
+  // ... [Leave the rest of your functions like peer.on('connection'), loops, and drag bindings exactly as they were below]
 
   // Handle incoming connections from any player in the mesh
   peer.on('connection', (conn) => {
