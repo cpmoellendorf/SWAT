@@ -34,7 +34,8 @@ window.addEventListener('load', function() {
     roomHash = Math.random().toString(36).substring(2, 9);
     window.location.hash = roomHash;
     
-    peer = new Peer(roomHash);
+    peer = new Peer(roomHash, { debug: 2, config: { iceServers: [{ urls: 'stun:://google.com' }] } });
+
     myRole = 'defense-1';
     
     peer.on('open', () => {
@@ -42,7 +43,8 @@ window.addEventListener('load', function() {
     });
   } else {
     // --- GUESTS (Players 2, 3, and 4) ---
-    peer = new Peer();
+    peer = new Peer({ debug: 2, config: { iceServers: [{ urls: 'stun:://google.com' }] } });
+
     
     peer.on('open', () => {
       statusText.innerText = "Connecting to lobby mesh...";
