@@ -76,7 +76,7 @@ window.addEventListener('load', function() {
   }
 
   // ==========================================================================
-  // MESH CONNECTION TRACKER & INBOUND LISTENER
+  // MESH CONNECTION TRACKER & INBOUND LISTENER (Fixed Roster Sync)
   // ==========================================================================
   function setupConnectionListeners(conn) {
     
@@ -86,26 +86,32 @@ window.addEventListener('load', function() {
         activeConnections.push(conn);
       }
 
-      // If I am the Host, assign a role to the newcomer based on their order,
-      // and introduce them to everyone else currently in the lobby array
+      // If I am the Host, assign roles and broadcast the total player count to EVERYONE
       if (myRole === 'defense-1') {
         const slots = ['attack-1', 'defense-2', 'attack-2'];
         const assignedRole = slots[activeConnections.length - 1] || 'spectator';
         
-        // Tell the new player what their role is
-        conn.send({ type: 'assign-role', role: assignedRole });
+        // A 100ms timeout ensures the network pipe is 100% stable before sending data
+        setTimeout(() => {
+          // 1. Send the role directly to the newcomer
+          conn.send({ type: 'assign-role', role: assignedRole });
 
-        // Build a list of all other players' Peer IDs currently in the room
-        const otherPeerIds = activeConnections
-          .filter(c => c.peer !== conn.peer)
-          .map(c => c.peer);
+          // 2. Introduce the newcomer to all previous peers currently in the lobby
+          const otherPeerIds = activeConnections
+            .filter(c => c.peer !== conn.peer)
+            .map(c => c.peer);
 
-        // Send the list to the newcomer so they can connect to everyone else
-        if (otherPeerIds.length > 0) {
-          conn.send({ type: 'introduce-peers', peerIds: otherPeerIds });
-        }
+          if (otherPeerIds.length > 0) {
+            conn.send({ type: 'introduce-peers', peerIds: otherPeerIds });
+          }
 
-        updateLobbyStatus();
+          // 3. NEW: Broadcast a global lobby sync update to ALL connected players
+          const totalPlayers = activeConnections.length + 1;
+          sendNetworkData({ type: 'lobby-sync', count: totalPlayers });
+          
+          // Update the Host's own screen text
+          updateLobbyStatus();
+        }, 100);
       }
     });
 
@@ -120,7 +126,6 @@ window.addEventListener('load', function() {
       }
 
       if (data.type === 'introduce-peers') {
-        // I am a new player. Loop through the list the Host sent me and connect to everyone
         data.peerIds.forEach(id => {
           if (!activeConnections.find(c => c.peer === id)) {
             const peerConn = peer.connect(id);
@@ -129,6 +134,16 @@ window.addEventListener('load', function() {
         });
         return;
       }
+
+      // NEW: Catch global player count sync packets from the Host
+      if (data.type === 'lobby-sync') {
+        statusText.innerText = `🟢 Players: ${data.count}/4 (Role: ${myRole.toUpperCase()})`;
+        return;
+      }
+
+      // --- GAMEPLAY SYNC PACKETS STAY BELOW HERE ---
+      const opponentLetter = letters[data.x];
+
 
       // --- GAMEPLAY SYNC PACKETS ---
       const opponentLetter = letters[data.x];
