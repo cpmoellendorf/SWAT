@@ -319,4 +319,62 @@ window.addEventListener('load', function() {
     }
   });
 
+  // ==========================================================================
+  // [THIS IS THE TRASH BIN CODE ALREADY IN YOUR FILE]
+  // ==========================================================================
+  trashBin.addEventListener('dragover', function(event) {
+    event.preventDefault();
+    event.dataTransfer.dropEffect = 'move';
+  });
+
+  trashBin.addEventListener('drop', function(event) {
+    event.preventDefault();
+    if (draggedToken && !isSupplyToken) {
+      const oldX = parseInt(draggedToken.parentElement.dataset.x);
+      const oldY = parseInt(draggedToken.parentElement.dataset.y);
+      draggedToken.remove();
+      sendNetworkData({ isDelete: true, oldX: oldX, oldY: oldY });
+    }
+  });
+
+
+  // ==========================================================================
+  // PASTE THE NEW COPIER CODE RIGHT HERE:
+  // ==========================================================================
+  if (copyBtn) {
+    copyBtn.addEventListener('click', () => {
+      const urlToCopy = window.location.href;
+
+      try {
+        const tempInput = document.createElement('input');
+        tempInput.style.position = 'absolute';
+        tempInput.style.left = '-9999px';
+        tempInput.value = urlToCopy;
+        document.body.appendChild(tempInput);
+
+        tempInput.select();
+        tempInput.setSelectionRange(0, 99999); 
+
+        const success = document.execCommand('copy');
+        document.body.removeChild(tempInput); 
+
+        if (success) {
+          const oldText = statusText.innerText;
+          statusText.innerText = "📋 Link Copied to Clipboard!";
+          setTimeout(() => { statusText.innerText = oldText; }, 3000);
+        } else {
+          throw new Error("execCommand returned false");
+        }
+
+      } catch (err) {
+        console.error("Fallback copy failed:", err);
+        statusText.innerText = "⚠️ Copy blocked. Please copy from the address bar.";
+      }
+    });
+  }
+
+
+
+
 });
+
