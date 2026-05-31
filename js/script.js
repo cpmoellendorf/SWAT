@@ -21,11 +21,21 @@ window.addEventListener('load', function() {
   const statusText = document.getElementById('link-status');
 
   // ==========================================================================
-  // PEER-TO-PEER MULTIPLAYER ENGINE INITIALIZATION (With Side Assignment)
+  // PEER-TO-PEER MULTIPLAYER ENGINE INITIALIZATION (With Auto-Retry)
   // ==========================================================================
-  
-  // Grab a reference to the visual guide card container in the HTML
   const guideCard = document.querySelector('.guide-panel');
+  let retryCount = 0;
+  const maxRetries = 5;
+
+  function connectToHost() {
+    statusText.innerText = `Connecting to Host... (Attempt ${retryCount + 1})`;
+    connection = peer.connect(targetPeerId);
+    
+    connection.on('open', () => {
+      setupConnectionListeners();
+      statusText.innerText = "🟢 Connected to Host! Game Live.";
+    });
+  }
 
   try {
     peer = new Peer();
@@ -35,26 +45,14 @@ window.addEventListener('load', function() {
         // --- HOST SIDE (Player 1 = DEFENSE) ---
         window.location.hash = id;
         statusText.innerText = "Ready! Copy link and send to Player 2.";
-        
-        // Ensure the card stays in its default light-blue Defense state
         if (guideCard) guideCard.classList.remove('attack');
-        
       } else {
         // --- GUEST SIDE (Player 2 = ATTACK) ---
-        statusText.innerText = "Connecting to Host...";
-        connection = peer.connect(targetPeerId);
-        
-        // NEW: Instantly flip this player's layout panel to the orange Attack configuration
         if (guideCard) {
           guideCard.classList.add('attack');
-          // Update the main top text banner to say ATTACK
           guideCard.querySelector('.guide-header').innerText = "ATTACK";
         }
-        
-        connection.on('open', () => {
-          setupConnectionListeners();
-          statusText.innerText = "🟢 Connected to Host! Game Live.";
-        });
+        connectToHost();
       }
     });
 
@@ -65,15 +63,27 @@ window.addEventListener('load', function() {
       statusText.innerText = "🟢 Player 2 Connected! Game Live.";
     });
 
+    // CATCH THE "PEER-UNAVAILABLE" GLITCH AND RETRY AUTOMATICALLY
     peer.on('error', (err) => {
       console.error("Multiplayer Connection Error:", err);
-      statusText.innerText = "⚠️ Connection error. Type: " + err.type;
+      
+      if (err.type === 'peer-unavailable' && targetPeerId && retryCount < maxRetries) {
+        retryCount++;
+        statusText.innerText = "⚠️ Host layout loading... Retrying connection...";
+        // Wait exactly 1.5 seconds to let the Host's server activate, then try again
+        setTimeout(() => {
+          connectToHost();
+        }, 1500);
+      } else {
+        statusText.innerText = "⚠️ Connection error. Type: " + err.type;
+      }
     });
 
   } catch (error) {
     console.error("PeerJS completely failed to load:", error);
     statusText.innerText = "⚠️ Network initialization failed.";
   }
+
 
 
   // Share Link Button Copier
