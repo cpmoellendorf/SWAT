@@ -14,58 +14,53 @@ window.addEventListener('load', function() {
   let draggedToken = null;
   let isSupplyToken = false;
 
+  // Read the room ID from the link hash
   let targetPeerId = window.location.hash.substring(1);
 
   const copyBtn = document.getElementById('copy-link-btn');
   const statusText = document.getElementById('link-status');
 
   // ==========================================================================
-  // SAFETY-CHECK: INITIALIZE FREE PEER-TO-PEER MULTIPLAYER ENGINE
+  // PEER-TO-PEER MULTIPLAYER ENGINE INITIALIZATION
   // ==========================================================================
-  if (typeof Peer === 'undefined') {
-    console.error("CRITICAL ERROR: PeerJS network file failed to download from the internet.");
-    statusText.innerText = "⚠️ Network offline. Local Solo Play Active.";
-    // Create an empty dummy object so lines below won't crash your loop!
-    peer = { on: function() {} }; 
-  } else {
-    // If Peer exists, run your normal multiplayer room connection code safely
-    try {
+  try {
+    // Generate a fresh connection instance pointing to the global network cloud
+    peer = new Peer();
+    
+    peer.on('open', (id) => {
       if (!targetPeerId) {
-        // --- PLAYER 1 MODE (Host) ---
-        peer = new Peer();
-        
-        peer.on('open', (id) => {
-          window.location.hash = id;
-          statusText.innerText = "Ready! Copy link and send to Player 2.";
-        });
-
-        peer.on('connection', (conn) => {
-          connection = conn;
-          setupConnectionListeners();
-          statusText.innerText = "🟢 Player 2 Connected! Game Live.";
-        });
+        // --- HOST SIDE (Player 1) ---
+        window.location.hash = id;
+        statusText.innerText = "Ready! Copy link and send to Player 2.";
       } else {
-        // --- PLAYER 2 MODE (Guest) ---
-        peer = new Peer();
+        // --- GUEST SIDE (Player 2) ---
+        statusText.innerText = "Connecting to Host...";
+        connection = peer.connect(targetPeerId);
         
-        peer.on('open', () => {
-          statusText.innerText = "Connecting to Host...";
-          connection = peer.connect(targetPeerId);
-          
-          connection.on('open', () => {
-            setupConnectionListeners();
-            statusText.innerText = "🟢 Connected to Host! Game Live.";
-          });
+        connection.on('open', () => {
+          setupConnectionListeners();
+          statusText.innerText = "🟢 Connected to Host! Game Live.";
         });
       }
-    } catch (networkError) {
-      console.error("PeerJS initialization failed:", networkError);
-      statusText.innerText = "⚠️ Server connection failed. Solo Mode.";
-    }
+    });
+
+    // Host handles incoming connections from Guest dial-ins
+    peer.on('connection', (conn) => {
+      connection = conn;
+      setupConnectionListeners();
+      statusText.innerText = "🟢 Player 2 Connected! Game Live.";
+    });
+
+    // Alert you explicitly if a room handshake breaks
+    peer.on('error', (err) => {
+      console.error("Multiplayer Connection Error:", err);
+      statusText.innerText = "⚠️ Connection error. Type: " + err.type;
+    });
+
+  } catch (error) {
+    console.error("PeerJS completely failed to load:", error);
+    statusText.innerText = "⚠️ Network initialization failed.";
   }
-
-  // ... [Keep your copyBtn listener and the rest of your file exactly the same]
-
 
   // Share Link Button Copier
   copyBtn.addEventListener('click', () => {
@@ -75,6 +70,10 @@ window.addEventListener('load', function() {
       setTimeout(() => { statusText.innerText = oldText; }, 3000);
     });
   });
+
+  // ... [Keep the remaining functional code from your previous file exactly the same]
+  // (Your sendNetworkData, setupConnectionListeners, loops, drag/drop cells, and depot grids)
+
 
   // Outbound Data Transmitter
   function sendNetworkData(payload) {
