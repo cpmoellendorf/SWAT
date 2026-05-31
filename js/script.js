@@ -120,13 +120,12 @@ window.addEventListener('load', function() {
     conn.on('data', (data) => {
       if (!data) return;
 
-      // --- INTERNAL SYSTEM SIGNALS ---
+      // --- INTERNAL MULTIPLAYER SYSTEM SIGNALS ---
       if (data.type === 'assign-role') {
         myRole = data.role;
         applyVisualRoleProperties(data.role);
         return;
       }
-
       if (data.type === 'introduce-peers') {
         data.peerIds.forEach(id => {
           if (!activeConnections.find(c => c.peer === id)) {
@@ -136,29 +135,69 @@ window.addEventListener('load', function() {
         });
         return;
       }
-
-      // NEW: Catch global player count sync packets from the Host
       if (data.type === 'lobby-sync') {
         statusText.innerText = `🟢 Players: ${data.count}/4 (Role: ${myRole.toUpperCase()})`;
         return;
       }
 
-      // --- GAMEPLAY SYNC PACKETS STAY BELOW HERE ---
-      const opponentLetter = letters[data.x];
-
-
-      // --- GAMEPLAY SYNC PACKETS ---
+      // ==========================================================================
+      // TEAM-AWARE GAMEPLAY SYNC FILTER (Shared Team Grids)
+      // ==========================================================================
+      
+      // 1. Parse who sent this data packet (e.g., 'defense' or 'attack')
+      const senderTeam = data.senderRole.split('-')[0]; // Extracts 'defense' or 'attack'
+      const myTeam = myRole.split('-')[0];             // Extracts your own team name
+      
+      // Convert coordinates for text log readouts
       const opponentLetter = letters[data.x];
       const opponentNumber = data.y + 1;
 
-      if (data.isNew) {
-        console.log(`📡 MESH ALERT: A player placed a token at ${opponentLetter}${opponentNumber}.`);
-      } else if (data.isDelete) {
-        console.log(`📡 MESH ALERT: A player trashed a token from ${letters[data.oldX]}${data.oldY + 1}.`);
+      // CHECK: Is the player who moved this token on my team?
+      if (senderTeam === myTeam) {
+        
+        // --- VISUAL SYNC: Update our shared map grid in real-time ---
+        if (data.isNew) {
+          const targetCell = board.querySelector(`.cell[data-x="${data.x}"][data-y="${data.y}"]`);
+          if (targetCell) {
+            const remoteToken = document.createElement('div');
+            remoteToken.classList.add('token');
+            remoteToken.setAttribute('draggable', 'true');
+            if (data.color) remoteToken.classList.add(data.color);
+            bindTokenDragEvents(remoteToken, false);
+            targetCell.appendChild(remoteToken);
+          }
+          console.log(`🤝 TEAM UPDATE: Your teammate placed a token at ${opponentLetter}${opponentNumber}.`);
+        } 
+        else if (data.isDelete) {
+          const targetCell = board.querySelector(`.cell[data-x="${data.oldX}"][data-y="${data.oldY}"]`);
+          if (targetCell) {
+            const tokenToDelete = targetCell.children[data.tokenIndex];
+            if (tokenToDelete) tokenToDelete.remove();
+          }
+          console.log(`🤝 TEAM UPDATE: Your teammate deleted a token at ${letters[data.oldX]}${data.oldY + 1}.`);
+        } 
+        else {
+          const sourceCell = board.querySelector(`.cell[data-x="${data.oldX}"][data-y="${data.oldY}"]`);
+          const targetCell = board.querySelector(`.cell[data-x="${data.x}"][data-y="${data.y}"]`);
+          
+          if (sourceCell && targetCell) {
+            const remoteTokenToMove = sourceCell.children[data.tokenIndex] || sourceCell.querySelector('.token');
+            if (remoteTokenToMove) targetCell.appendChild(remoteTokenToMove);
+          }
+          console.log(`🤝 TEAM UPDATE: Your teammate shifted a token to ${opponentLetter}${opponentNumber}.`);
+        }
+
       } else {
-        console.log(`📡 MESH ALERT: A player shifted a token from ${letters[data.oldX]}${data.oldY + 1} to ${opponentLetter}${opponentNumber}.`);
+        // --- INTEL LOCKDOWN: Hide the enemy movement from our grid ---
+        // The token does NOT spawn or move on your map layout box, keeping your board private.
+        if (data.isNew) {
+          console.log(`📡 ENEMY INTEL: Opponent (${data.senderRole.toUpperCase()}) spawned a token hidden on THEIR board.`);
+        } else {
+          console.log(`📡 ENEMY INTEL: Opponent (${data.senderRole.toUpperCase()}) moved a piece on THEIR map.`);
+        }
       }
     });
+
 
     conn.on('close', () => {
       activeConnections = activeConnections.filter(c => c.peer !== conn.peer);
@@ -234,11 +273,14 @@ window.addEventListener('load', function() {
 
       // 2. Alert your opponent of your action wirelessly
       sendNetworkData({ 
-        isNew: true, 
-        color: colorClass, 
-        x: gameX, 
-        y: gameY 
+      isNew: true, 
+      color: colorClass, 
+      x: gameX, 
+      y: gameY,
+      senderRole: myRole // NEW: Tells the network who placed this item
       });
+
+
       
       console.log(`You placed a token at ${letters[gameX]}${gameY + 1}.`);
     } else {
@@ -249,12 +291,16 @@ window.addEventListener('load', function() {
       cell.appendChild(draggedToken); // Stays local to your screen!
 
       // 2. Alert your opponent of your relocation wirelessly
+      const tokenIndex = Array.from(draggedToken.parentElement.children).indexOf(draggedToken);
+
       sendNetworkData({ 
         isNew: false, 
         oldX: oldX, 
         oldY: oldY, 
+        tokenIndex: tokenIndex, // Keeps multi-stack order mapping working
         x: gameX, 
-        y: gameY 
+        y: gameY,
+        senderRole: myRole // NEW: Tells the network who moved this item
       });
       
       console.log(`You moved your token to ${letters[gameX]}${gameY + 1}.`);
