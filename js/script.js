@@ -10,7 +10,8 @@ window.addEventListener('load', function() {
   const totalCells = columns * rows;
 
   let peer = null;
-  let connection = null;
+  // Track all connected peers instead of just one
+  let activeConnections = [];
   let draggedToken = null;
   let isSupplyToken = false;
 
@@ -19,132 +20,161 @@ window.addEventListener('load', function() {
 
   const copyBtn = document.getElementById('copy-link-btn');
   const statusText = document.getElementById('link-status');
-
   // ==========================================================================
-  // PEER-TO-PEER MULTIPLAYER ENGINE INITIALIZATION (With Auto-Retry)
+  // 4-PLAYER MESH NETWORKING PROFILE WITH AUTO-ROSTER SHARING
   // ==========================================================================
   const guideCard = document.querySelector('.guide-panel');
-  let retryCount = 0;
-  const maxRetries = 5;
+  
+  // Track multiple live connections simultaneously
+  let activeConnections = [];
+  
+  // Track the shared room ID anchor name from the URL hash
+  let roomHash = window.location.hash.substring(1);
+  let myRole = 'defense-1'; // Default role assumption
 
-  function connectToHost() {
-    statusText.innerText = `Connecting to Host... (Attempt ${retryCount + 1})`;
-    connection = peer.connect(targetPeerId);
+  if (!roomHash) {
+    // --- PLAYER 1 (Lobby Creator / Host) ---
+    // Create a random room seed anchor and lock it into the URL
+    roomHash = 'swat-' + Math.random().toString(36).substring(2, 9);
+    window.location.hash = roomHash;
     
-    connection.on('open', () => {
-      setupConnectionListeners();
-      statusText.innerText = "🟢 Connected to Host! Game Live.";
+    // Connect to the network using the room hash as the ID
+    peer = new Peer(roomHash);
+    myRole = 'defense-1';
+    
+    peer.on('open', () => {
+      statusText.innerText = "Lobby Created! Send link to Players 2, 3, and 4 (0/3 Joined).";
     });
-  }
-
-  try {
+  } else {
+    // --- GUESTS (Players 2, 3, and 4) ---
+    // Connect with a completely random ID so multiple tabs don't clash on one computer
     peer = new Peer();
     
-    peer.on('open', (id) => {
-      if (!targetPeerId) {
-        // --- HOST SIDE (Player 1 = DEFENSE) ---
-        window.location.hash = id;
-        statusText.innerText = "Ready! Copy link and send to Player 2.";
-        if (guideCard) guideCard.classList.remove('attack');
-      } else {
-        // --- GUEST SIDE (Player 2 = ATTACK) ---
-        if (guideCard) {
-          guideCard.classList.add('attack');
-          guideCard.querySelector('.guide-header').innerText = "ATTACK";
-        }
-        connectToHost();
-      }
-    });
-
-    // Host handles incoming connections from Guest dial-ins
-    peer.on('connection', (conn) => {
-      connection = conn;
-      setupConnectionListeners();
-      statusText.innerText = "🟢 Player 2 Connected! Game Live.";
-    });
-
-    // CATCH THE "PEER-UNAVAILABLE" GLITCH AND RETRY AUTOMATICALLY
-    peer.on('error', (err) => {
-      console.error("Multiplayer Connection Error:", err);
+    peer.on('open', () => {
+      statusText.innerText = "Connecting to lobby mesh...";
       
-      if (err.type === 'peer-unavailable' && targetPeerId && retryCount < maxRetries) {
-        retryCount++;
-        statusText.innerText = "⚠️ Host layout loading... Retrying connection...";
-        // Wait exactly 1.5 seconds to let the Host's server activate, then try again
-        setTimeout(() => {
-          connectToHost();
-        }, 1500);
-      } else {
-        statusText.innerText = "⚠️ Connection error. Type: " + err.type;
-      }
+      // Dial straight into the Host using the roomHash from the URL
+      const hostConn = peer.connect(roomHash);
+      setupConnectionListeners(hostConn);
     });
-
-  } catch (error) {
-    console.error("PeerJS completely failed to load:", error);
-    statusText.innerText = "⚠️ Network initialization failed.";
   }
 
-
-
-  // Share Link Button Copier
-  copyBtn.addEventListener('click', () => {
-    navigator.clipboard.writeText(window.location.href).then(() => {
-      const oldText = statusText.innerText;
-      statusText.innerText = "📋 Link Copied to Clipboard!";
-      setTimeout(() => { statusText.innerText = oldText; }, 3000);
-    });
+  // Handle incoming connections from any player in the mesh
+  peer.on('connection', (conn) => {
+    setupConnectionListeners(conn);
   });
 
-  // ... [Keep the remaining functional code from your previous file exactly the same]
-  // (Your sendNetworkData, setupConnectionListeners, loops, drag/drop cells, and depot grids)
+  peer.on('error', (err) => {
+    console.error("Mesh Network Error:", err);
+    statusText.innerText = "⚠️ Network issue. Type: " + err.type;
+  });
 
-
-  // Outbound Data Transmitter
+  // ==========================================================================
+  // UNIFIED BROADCAST SYSTEM
+  // ==========================================================================
   function sendNetworkData(payload) {
-    if (connection && connection.open) {
-      connection.send(payload);
-    }
+    activeConnections.forEach(conn => {
+      if (conn && conn.open) {
+        conn.send(payload);
+      }
+    });
   }
 
-    // ==========================================================================
-  // DECOUPLED INBOUND DATA RECEIVER (Battleship Style)
   // ==========================================================================
-  function setupConnectionListeners() {
-    connection.on('data', (data) => {
-      
-      // Convert the incoming numbers back to tactical coordinates for console logs
+  // MESH CONNECTION TRACKER & INBOUND LISTENER
+  // ==========================================================================
+  function setupConnectionListeners(conn) {
+    
+    conn.on('open', () => {
+      // Add the connection to our active roster array if it isn't already there
+      if (!activeConnections.find(c => c.peer === conn.peer)) {
+        activeConnections.push(conn);
+      }
+
+      // If I am the Host, assign a role to the newcomer based on their order,
+      // and introduce them to everyone else currently in the lobby array
+      if (myRole === 'defense-1') {
+        const slots = ['attack-1', 'defense-2', 'attack-2'];
+        const assignedRole = slots[activeConnections.length - 1] || 'spectator';
+        
+        // Tell the new player what their role is
+        conn.send({ type: 'assign-role', role: assignedRole });
+
+        // Build a list of all other players' Peer IDs currently in the room
+        const otherPeerIds = activeConnections
+          .filter(c => c.peer !== conn.peer)
+          .map(c => c.peer);
+
+        // Send the list to the newcomer so they can connect to everyone else
+        if (otherPeerIds.length > 0) {
+          conn.send({ type: 'introduce-peers', peerIds: otherPeerIds });
+        }
+
+        updateLobbyStatus();
+      }
+    });
+
+    conn.on('data', (data) => {
+      if (!data) return;
+
+      // --- INTERNAL SYSTEM SIGNALS ---
+      if (data.type === 'assign-role') {
+        myRole = data.role;
+        applyVisualRoleProperties(data.role);
+        return;
+      }
+
+      if (data.type === 'introduce-peers') {
+        // I am a new player. Loop through the list the Host sent me and connect to everyone
+        data.peerIds.forEach(id => {
+          if (!activeConnections.find(c => c.peer === id)) {
+            const peerConn = peer.connect(id);
+            setupConnectionListeners(peerConn);
+          }
+        });
+        return;
+      }
+
+      // --- GAMEPLAY SYNC PACKETS ---
       const opponentLetter = letters[data.x];
       const opponentNumber = data.y + 1;
 
       if (data.isNew) {
-        // --- CHOOSE AN ATTACK/DEFENSE INTERACTION RULES ENGINE ---
-        // Instead of instantly spawning a visible token on your map, 
-        // the code logs it privately so you know what your opponent did.
-        console.log(`📡 RADAR ALERT: Opponent instantiated a token on THEIR board at ${opponentLetter}${opponentNumber}.`);
-        
-        /* 
-        NOTE: If you WANT to show where they placed something, you can customize it here.
-        For example, you could spawn a special "Target Dot" instead of their actual player piece.
-        */
-        
+        console.log(`📡 MESH ALERT: A player placed a token at ${opponentLetter}${opponentNumber}.`);
       } else if (data.isDelete) {
-        console.log(`📡 RADAR ALERT: Opponent deleted a token on THEIR board at ${letters[data.oldX]}${data.oldY + 1}.`);
-        
+        console.log(`📡 MESH ALERT: A player trashed a token from ${letters[data.oldX]}${data.oldY + 1}.`);
       } else {
-        // Tracker for normal piece movements
-        console.log(`📡 RADAR ALERT: Opponent shifted a piece on THEIR map from ${letters[data.oldX]}${data.oldY + 1} to ${opponentLetter}${opponentNumber}.`);
+        console.log(`📡 MESH ALERT: A player shifted a token from ${letters[data.oldX]}${data.oldY + 1} to ${opponentLetter}${opponentNumber}.`);
       }
     });
 
-    connection.on('close', () => {
-      statusText.innerText = "🔴 Opponent disconnected.";
-    });
-
-
-    connection.on('close', () => {
-      statusText.innerText = "🔴 Opponent disconnected.";
+    conn.on('close', () => {
+      activeConnections = activeConnections.filter(c => c.peer !== conn.peer);
+      updateLobbyStatus();
     });
   }
+
+  // ==========================================================================
+  // HELPERS FOR VISUAL ROLE STATES & LOBBY STATUS
+  // ==========================================================================
+  function updateLobbyStatus() {
+    const totalPlayers = activeConnections.length + 1;
+    statusText.innerText = `🟢 Players in Game: ${totalPlayers} / 4 (You: ${myRole.toUpperCase()})`;
+  }
+
+  function applyVisualRoleProperties(role) {
+    if (!guideCard) return;
+    
+    if (role.startsWith('attack')) {
+      guideCard.classList.add('attack');
+      guideCard.querySelector('.guide-header').innerText = `ATTACK (${role.toUpperCase()})`;
+    } else {
+      guideCard.classList.remove('attack');
+      guideCard.querySelector('.guide-header').innerText = `DEFENSE (${role.toUpperCase()})`;
+    }
+    updateLobbyStatus();
+  }
+
 
   // ==========================================================================
   // CENTRALIZED COMPONENT DRAG BINDINGS
