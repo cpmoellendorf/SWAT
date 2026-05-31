@@ -1,4 +1,3 @@
-// FORCES THE ENGINE TO WAIT UNTIL ALL SYSTEM ASSETS & PEERJS LIBRARIES ARE LOADED
 window.addEventListener('load', function() {
 
   // ==========================================================================
@@ -15,46 +14,58 @@ window.addEventListener('load', function() {
   let draggedToken = null;
   let isSupplyToken = false;
 
-  // Read the room ID from the link hash (e.g. website.html#room-xyz)
   let targetPeerId = window.location.hash.substring(1);
 
   const copyBtn = document.getElementById('copy-link-btn');
   const statusText = document.getElementById('link-status');
 
   // ==========================================================================
-  // FREE PEER-TO-PEER MULTIPLAYER INITIALIZATION
+  // SAFETY-CHECK: INITIALIZE FREE PEER-TO-PEER MULTIPLAYER ENGINE
   // ==========================================================================
-  if (!targetPeerId) {
-    // --- PLAYER 1 MODE (Host) ---
-    // Connect to free cloud infrastructure to get a unique link ID
-    peer = new Peer();
-    
-    peer.on('open', (id) => {
-      window.location.hash = id;
-      statusText.innerText = "Ready! Copy link and send to Player 2.";
-    });
-
-    // Wait for Player 2 to dial in
-    peer.on('connection', (conn) => {
-      connection = conn;
-      setupConnectionListeners();
-      statusText.innerText = "🟢 Player 2 Connected! Game Live.";
-    });
+  if (typeof Peer === 'undefined') {
+    console.error("CRITICAL ERROR: PeerJS network file failed to download from the internet.");
+    statusText.innerText = "⚠️ Network offline. Local Solo Play Active.";
+    // Create an empty dummy object so lines below won't crash your loop!
+    peer = { on: function() {} }; 
   } else {
-    // --- PLAYER 2 MODE (Guest) ---
-    // Connect to cloud infrastructure and immediately dial Player 1's hash ID
-    peer = new Peer();
-    
-    peer.on('open', () => {
-      statusText.innerText = "Connecting to Host...";
-      connection = peer.connect(targetPeerId);
-      
-      connection.on('open', () => {
-        setupConnectionListeners();
-        statusText.innerText = "🟢 Connected to Host! Game Live.";
-      });
-    });
+    // If Peer exists, run your normal multiplayer room connection code safely
+    try {
+      if (!targetPeerId) {
+        // --- PLAYER 1 MODE (Host) ---
+        peer = new Peer();
+        
+        peer.on('open', (id) => {
+          window.location.hash = id;
+          statusText.innerText = "Ready! Copy link and send to Player 2.";
+        });
+
+        peer.on('connection', (conn) => {
+          connection = conn;
+          setupConnectionListeners();
+          statusText.innerText = "🟢 Player 2 Connected! Game Live.";
+        });
+      } else {
+        // --- PLAYER 2 MODE (Guest) ---
+        peer = new Peer();
+        
+        peer.on('open', () => {
+          statusText.innerText = "Connecting to Host...";
+          connection = peer.connect(targetPeerId);
+          
+          connection.on('open', () => {
+            setupConnectionListeners();
+            statusText.innerText = "🟢 Connected to Host! Game Live.";
+          });
+        });
+      }
+    } catch (networkError) {
+      console.error("PeerJS initialization failed:", networkError);
+      statusText.innerText = "⚠️ Server connection failed. Solo Mode.";
+    }
   }
+
+  // ... [Keep your copyBtn listener and the rest of your file exactly the same]
+
 
   // Share Link Button Copier
   copyBtn.addEventListener('click', () => {
