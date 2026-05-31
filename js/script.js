@@ -10,7 +10,6 @@ window.addEventListener('load', function() {
   const totalCells = columns * rows;
 
   let peer = null;
-  let connection = null; // Stays null initially for mesh mapping loops
   let draggedToken = null;
   let isSupplyToken = false;
 
