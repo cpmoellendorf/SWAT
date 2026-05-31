@@ -106,38 +106,40 @@ window.addEventListener('load', function() {
     }
   }
 
-  // Inbound Data Receiver
+    // ==========================================================================
+  // DECOUPLED INBOUND DATA RECEIVER (Battleship Style)
+  // ==========================================================================
   function setupConnectionListeners() {
     connection.on('data', (data) => {
+      
+      // Convert the incoming numbers back to tactical coordinates for console logs
+      const opponentLetter = letters[data.x];
+      const opponentNumber = data.y + 1;
+
       if (data.isNew) {
-        // Mirror fresh entity generation
-        const targetCell = board.querySelector(`.cell[data-x="${data.x}"][data-y="${data.y}"]`);
-        if (targetCell) {
-          const remoteToken = document.createElement('div');
-          remoteToken.classList.add('token');
-          remoteToken.setAttribute('draggable', 'true');
-          if (data.color) remoteToken.classList.add(data.color);
-          bindTokenDragEvents(remoteToken, false);
-          targetCell.appendChild(remoteToken);
-        }
-      } else if (data.isDelete) {
-        // Mirror a deletion trash event
-        const targetCell = board.querySelector(`.cell[data-x="${data.oldX}"][data-y="${data.oldY}"]`);
-        if (targetCell) {
-          const tokenToDelete = targetCell.children[data.tokenIndex];
-          if (tokenToDelete) tokenToDelete.remove();
-        }
-      } else {
-        // Mirror movements and stack transpositions
-        const sourceCell = board.querySelector(`.cell[data-x="${data.oldX}"][data-y="${data.oldY}"]`);
-        const targetCell = board.querySelector(`.cell[data-x="${data.x}"][data-y="${data.y}"]`);
+        // --- CHOOSE AN ATTACK/DEFENSE INTERACTION RULES ENGINE ---
+        // Instead of instantly spawning a visible token on your map, 
+        // the code logs it privately so you know what your opponent did.
+        console.log(`📡 RADAR ALERT: Opponent instantiated a token on THEIR board at ${opponentLetter}${opponentNumber}.`);
         
-        if (sourceCell && targetCell) {
-          const remoteTokenToMove = sourceCell.children[data.tokenIndex] || sourceCell.querySelector('.token');
-          if (remoteTokenToMove) targetCell.appendChild(remoteTokenToMove);
-        }
+        /* 
+        NOTE: If you WANT to show where they placed something, you can customize it here.
+        For example, you could spawn a special "Target Dot" instead of their actual player piece.
+        */
+        
+      } else if (data.isDelete) {
+        console.log(`📡 RADAR ALERT: Opponent deleted a token on THEIR board at ${letters[data.oldX]}${data.oldY + 1}.`);
+        
+      } else {
+        // Tracker for normal piece movements
+        console.log(`📡 RADAR ALERT: Opponent shifted a piece on THEIR map from ${letters[data.oldX]}${data.oldY + 1} to ${opponentLetter}${opponentNumber}.`);
       }
     });
+
+    connection.on('close', () => {
+      statusText.innerText = "🔴 Opponent disconnected.";
+    });
+
 
     connection.on('close', () => {
       statusText.innerText = "🔴 Opponent disconnected.";
@@ -172,34 +174,50 @@ window.addEventListener('load', function() {
       event.dataTransfer.dropEffect = isIllegalZone ? 'none' : 'move'; 
     });
 
-    cell.addEventListener('drop', function(event) {
-      event.preventDefault();
-      if (!draggedToken) return;
+      cell.addEventListener('drop', function(event) {
+    event.preventDefault();
+    if (!draggedToken) return;
 
-      const isWallOrWindow = cell.matches('[data-wall-right="true"], [data-wall-bottom="true"], [data-window-right="true"], [data-window-bottom="true"]');
-      if (isWallOrWindow) return; 
+    const isWallOrWindow = cell.matches('[data-wall-right="true"], [data-wall-bottom="true"], [data-window-right="true"], [data-window-bottom="true"]');
+    if (isWallOrWindow) return; 
 
-      if (isSupplyToken) {
-        const tokenClone = draggedToken.cloneNode(true);
-        tokenClone.classList.remove('dragging');
-        const colorClass = Array.from(draggedToken.classList).find(c => c !== 'token' && c !== 'dragging') || '';
-        
-        bindTokenDragEvents(tokenClone, false);
-        cell.appendChild(tokenClone);
+    if (isSupplyToken) {
+      // 1. Instantiate the token completely on your own board
+      const tokenClone = draggedToken.cloneNode(true);
+      tokenClone.classList.remove('dragging');
+      const colorClass = Array.from(draggedToken.classList).find(c => c !== 'token' && c !== 'dragging') || '';
+      
+      bindTokenDragEvents(tokenClone, false);
+      cell.appendChild(tokenClone); // Stays local to your screen!
 
-        // Transmit new token placement to peer
-        sendNetworkData({ isNew: true, color: colorClass, x: gameX, y: gameY });
-      } else {
-        const oldX = parseInt(draggedToken.parentElement.dataset.x);
-        const oldY = parseInt(draggedToken.parentElement.dataset.y);
-        const tokenIndex = Array.from(draggedToken.parentElement.children).indexOf(draggedToken);
-        
-        cell.appendChild(draggedToken);
+      // 2. Alert your opponent of your action wirelessly
+      sendNetworkData({ 
+        isNew: true, 
+        color: colorClass, 
+        x: gameX, 
+        y: gameY 
+      });
+      
+      console.log(`You placed a token at ${letters[gameX]}${gameY + 1}.`);
+    } else {
+      // 1. Move the existing piece locally on your own board
+      const oldX = parseInt(draggedToken.parentElement.dataset.x);
+      const oldY = parseInt(draggedToken.parentElement.dataset.y);
+      
+      cell.appendChild(draggedToken); // Stays local to your screen!
 
-        // Transmit token movement path changes to peer
-        sendNetworkData({ isNew: false, oldX: oldX, oldY: oldY, tokenIndex: tokenIndex, x: gameX, y: gameY });
-      }
-    });
+      // 2. Alert your opponent of your relocation wirelessly
+      sendNetworkData({ 
+        isNew: false, 
+        oldX: oldX, 
+        oldY: oldY, 
+        x: gameX, 
+        y: gameY 
+      });
+      
+      console.log(`You moved your token to ${letters[gameX]}${gameY + 1}.`);
+    }
+  });
   }
 
   // ==========================================================================
