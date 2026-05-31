@@ -376,3 +376,30 @@ body {
   border-bottom: 1px solid #333333; /* Adds a clean tactical dividing rule line */
   padding-bottom: 4px;
 }
+
+/* ==========================================================================
+   ATTACK SIDE OVERRIDES (Dynamic Side Variants)
+   ========================================================================== */
+
+/* Turns the header orange for the Attacker */
+.guide-panel.attack .guide-header {
+  background-color: #f77f00; /* Vibrant Tactical Orange */
+  color: #ffffff;
+}
+
+/* Changes the left list text accent colors to match the orange theme */
+.guide-panel.attack .guide-column.left-info strong,
+.guide-panel.attack .bars-header {
+  color: #f77f00;
+}
+
+/* Tints the generic action bars to an orange profile */
+.guide-panel.attack .action-bar.light {
+  background-color: #f77f00;
+  opacity: 0.6;
+}
+
+/* Completely deletes the 4th dark blue "Scan Only" bar for the attacker */
+.guide-panel.attack .action-bar.dark {
+  display: none;
+}

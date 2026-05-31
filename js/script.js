@@ -21,21 +21,35 @@ window.addEventListener('load', function() {
   const statusText = document.getElementById('link-status');
 
   // ==========================================================================
-  // PEER-TO-PEER MULTIPLAYER ENGINE INITIALIZATION
+  // PEER-TO-PEER MULTIPLAYER ENGINE INITIALIZATION (With Side Assignment)
   // ==========================================================================
+  
+  // Grab a reference to the visual guide card container in the HTML
+  const guideCard = document.querySelector('.guide-panel');
+
   try {
-    // Generate a fresh connection instance pointing to the global network cloud
     peer = new Peer();
     
     peer.on('open', (id) => {
       if (!targetPeerId) {
-        // --- HOST SIDE (Player 1) ---
+        // --- HOST SIDE (Player 1 = DEFENSE) ---
         window.location.hash = id;
         statusText.innerText = "Ready! Copy link and send to Player 2.";
+        
+        // Ensure the card stays in its default light-blue Defense state
+        if (guideCard) guideCard.classList.remove('attack');
+        
       } else {
-        // --- GUEST SIDE (Player 2) ---
+        // --- GUEST SIDE (Player 2 = ATTACK) ---
         statusText.innerText = "Connecting to Host...";
         connection = peer.connect(targetPeerId);
+        
+        // NEW: Instantly flip this player's layout panel to the orange Attack configuration
+        if (guideCard) {
+          guideCard.classList.add('attack');
+          // Update the main top text banner to say ATTACK
+          guideCard.querySelector('.guide-header').innerText = "ATTACK";
+        }
         
         connection.on('open', () => {
           setupConnectionListeners();
@@ -51,7 +65,6 @@ window.addEventListener('load', function() {
       statusText.innerText = "🟢 Player 2 Connected! Game Live.";
     });
 
-    // Alert you explicitly if a room handshake breaks
     peer.on('error', (err) => {
       console.error("Multiplayer Connection Error:", err);
       statusText.innerText = "⚠️ Connection error. Type: " + err.type;
@@ -61,6 +74,7 @@ window.addEventListener('load', function() {
     console.error("PeerJS completely failed to load:", error);
     statusText.innerText = "⚠️ Network initialization failed.";
   }
+
 
   // Share Link Button Copier
   copyBtn.addEventListener('click', () => {
