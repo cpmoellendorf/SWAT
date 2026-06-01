@@ -22,6 +22,7 @@ window.addEventListener('load', function () {
   const LETTERS      = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O'];
   const COLUMNS      = 16;
   const ROWS         = 11;
+  // Roles assigned to guests in join order. Host is always defense-1.
   const ROLE_SLOTS   = ['attack-1', 'defense-2', 'attack-2'];
   const STUN_CONFIG  = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
   const PEER_OPTIONS = { debug: 2, config: STUN_CONFIG };
@@ -46,6 +47,10 @@ window.addEventListener('load', function () {
   let myRole            = 'defense-1'; // Host default; guests receive their role via assign-role
   let draggedToken      = null;
   let isSupplyToken     = false;
+
+  // Host-only: maps peerId → assigned role so assignments are deterministic
+  // even if two guests connect near-simultaneously.
+  const roleRegistry = {};
 
   // ==========================================================================
   // NETWORK — INITIALIZATION
@@ -106,7 +111,15 @@ window.addEventListener('load', function () {
 
       // Small delay ensures the data channel is fully open before sending
       setTimeout(() => {
-        const assignedRole = ROLE_SLOTS[activeConnections.length - 1] || 'spectator';
+
+        // Assign a role if this peer doesn't already have one in the registry.
+        // Using the registry (not activeConnections.length) makes assignment
+        // deterministic even when two guests connect near-simultaneously.
+        if (!roleRegistry[conn.peer]) {
+          const slotIndex = Object.keys(roleRegistry).length; // 0, 1, 2
+          roleRegistry[conn.peer] = ROLE_SLOTS[slotIndex] || 'spectator';
+        }
+        const assignedRole = roleRegistry[conn.peer];
         conn.send({ type: 'assign-role', role: assignedRole });
 
         // Introduce this newcomer to all previously connected peers
@@ -118,9 +131,15 @@ window.addEventListener('load', function () {
           conn.send({ type: 'introduce-peers', peerIds: existingPeerIds });
         }
 
-        // Broadcast updated count to all guests, then update host UI
-        sendNetworkData({ type: 'lobby-sync', count: activeConnections.length + 1 });
-        updateLobbyStatus();
+        // Build a complete roster from the registry and broadcast it to everyone.
+        // Guests use this authoritative count instead of deriving it from their
+        // own partial connection list (which may not be fully formed yet).
+        const fullRoster = { [roomHash]: 'defense-1', ...roleRegistry };
+        const syncPayload = { type: 'lobby-sync', roster: fullRoster };
+        sendNetworkData(syncPayload);
+        // Apply locally so the host UI stays current too
+        handleLobbySync(syncPayload);
+
       }, 100);
     });
 
@@ -128,7 +147,15 @@ window.addEventListener('load', function () {
 
     conn.on('close', () => {
       activeConnections = activeConnections.filter(c => c.peer !== conn.peer);
-      updateLobbyStatus();
+      // Rebuild and rebroadcast roster so everyone sees the updated count
+      if (myRole === 'defense-1') {
+        const fullRoster = { [roomHash]: 'defense-1', ...roleRegistry };
+        const syncPayload = { type: 'lobby-sync', roster: fullRoster };
+        sendNetworkData(syncPayload);
+        handleLobbySync(syncPayload);
+      } else {
+        updateLobbyStatus();
+      }
     });
   }
 
@@ -157,7 +184,7 @@ window.addEventListener('load', function () {
     }
 
     if (data.type === 'lobby-sync') {
-      statusText.innerText = `🟢 Players: ${data.count}/4 — You are ${myRole.toUpperCase()}`;
+      handleLobbySync(data);
       return;
     }
 
@@ -170,6 +197,18 @@ window.addEventListener('load', function () {
     } else {
       logEnemyIntel(data);
     }
+  }
+
+  // ==========================================================================
+  // NETWORK — LOBBY SYNC HANDLER
+  // ==========================================================================
+
+  // Handles a lobby-sync packet for both host and guests.
+  // The roster is the single source of truth for player count and roles,
+  // sent by the host every time someone joins or leaves.
+  function handleLobbySync(data) {
+    const count = Object.keys(data.roster).length;
+    statusText.innerText = `🟢 Players: ${count}/4 — You are ${myRole.toUpperCase()}`;
   }
 
   // Apply a teammate's move to the local board
@@ -205,9 +244,9 @@ window.addEventListener('load', function () {
   // Log enemy activity without revealing position
   function logEnemyIntel(data) {
     const role = data.senderRole.toUpperCase();
-    if (data.isNew)    console.log(`📡 ENEMY (${role}) placed a token.`);
+    if (data.isNew)         console.log(`📡 ENEMY (${role}) placed a token.`);
     else if (data.isDelete) console.log(`📡 ENEMY (${role}) deleted a token.`);
-    else               console.log(`📡 ENEMY (${role}) moved a token.`);
+    else                    console.log(`📡 ENEMY (${role}) moved a token.`);
   }
 
   // ==========================================================================
