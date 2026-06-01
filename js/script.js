@@ -66,6 +66,17 @@ window.addEventListener('load', function () {
     peer = new Peer(roomHash, PEER_OPTIONS);
     peer.on('open', () => {
       statusText.innerText = 'Lobby created! Share this link with Players 2, 3, and 4 (0/3 joined).';
+
+      // Poll every second: rebuild the roster and push it to all connected guests.
+      // This is the single source of truth for player count and roles. Guests never
+      // derive the count themselves — they just display whatever the host sends.
+      setInterval(() => {
+        if (activeConnections.length === 0) return;
+        const fullRoster = { [roomHash]: 'defense-1', ...roleRegistry };
+        const syncPayload = { type: 'lobby-sync', roster: fullRoster };
+        sendNetworkData(syncPayload);
+        handleLobbySync(syncPayload);
+      }, 1000);
     });
 
   } else {
@@ -147,15 +158,8 @@ window.addEventListener('load', function () {
 
     conn.on('close', () => {
       activeConnections = activeConnections.filter(c => c.peer !== conn.peer);
-      // Rebuild and rebroadcast roster so everyone sees the updated count
-      if (myRole === 'defense-1') {
-        const fullRoster = { [roomHash]: 'defense-1', ...roleRegistry };
-        const syncPayload = { type: 'lobby-sync', roster: fullRoster };
-        sendNetworkData(syncPayload);
-        handleLobbySync(syncPayload);
-      } else {
-        updateLobbyStatus();
-      }
+      // The host polling loop will broadcast the updated roster within 1 second.
+      // Guests just wait for the next sync packet — no action needed here.
     });
   }
 
