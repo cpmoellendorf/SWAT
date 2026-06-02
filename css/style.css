@@ -39,10 +39,10 @@ body {
 
 #mini-map {
   display: grid;
-  grid-template-columns: repeat(16, 1fr);
+  grid-template-columns: repeat(15, 1fr);
   grid-template-rows: repeat(11, 1fr);
   width: 100%;
-  aspect-ratio: 16 / 11;
+  aspect-ratio: 15 / 11;
   gap: 1px;
   background-color: #444444;
 }
@@ -86,9 +86,9 @@ body {
    ========================================================================== */
 #game-board {
   display: grid;
-  grid-template-columns: repeat(16, 1fr);
+  grid-template-columns: repeat(15, 1fr);
   grid-template-rows: repeat(11, 1fr);
-  width: 640px;
+  width: 600px;
   height: 440px;
   gap: 2px;
   background-color: #f6f6f6;
@@ -108,7 +108,7 @@ body {
   gap: 1px;
   padding: 1px;
   box-sizing: border-box;
-  max-width: 38.125px;
+  max-width: 40px;
   max-height: 38.18px;
   overflow: hidden;
 }
@@ -325,7 +325,7 @@ body {
    ========================================================================== */
 .guide-panel {
   width: 260px;
-  height: 275px; /* Restored to original height since it only displays 6 bars at a time */
+  height: 275px; 
   background-color: #222222;
   border-radius: 6px;
   overflow: hidden;
@@ -435,7 +435,7 @@ body {
 }
 .guide-panel .d-light,
 .guide-panel .d-dark {
-  display: block !important; /* or flex, depending on your layout */
+  display: block !important;
 }
 
 /* 2. ATTACK STATE: Hide defense bars, show attack bars */
