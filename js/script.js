@@ -35,19 +35,19 @@ window.addEventListener('load', function() {
       setupConnectionListeners();
       statusText.innerText = "🟢 Connected to Host! Game Live.";
       
-      // GUEST LIVE: Transform the guest's hidden copy link button into a "Start New Game" button
+      // GUEST LIVE: Reveal the transformed "Start New Game" options for Attacker
       transformToStartNewGameButton();
     });
   }
 
-  // Shared Helper to swap the button text and redirect link for whichever client is live
+  // Shared Helper to swap button behavior dynamically once a session is live
   function transformToStartNewGameButton() {
     if (copyBtn) {
       copyBtn.innerText = "🔄 Start New Game";
       copyBtn.onclick = function() {
         window.location.href = "https://cpmoellendorf.github.io/SWAT/";
       };
-      copyBtn.style.display = 'inline-block'; // Explicitly show it on both sides
+      copyBtn.style.display = 'inline-block';
     }
   }
 
@@ -69,7 +69,7 @@ window.addEventListener('load', function() {
           if (header) header.innerText = "ATTACK";
         }
         
-        // Hide it initially while connecting, it will pop back up as 'Start New Game' on open
+        // Hide initial host layout configuration controls while negotiating link context
         if (copyBtn) {
           copyBtn.style.display = 'none';
         }
@@ -83,7 +83,7 @@ window.addEventListener('load', function() {
       setupConnectionListeners();
       statusText.innerText = "🟢 Player 2 Connected! Game Live.";
       
-      // HOST LIVE: Transform Host button into "Start New Game" button
+      // HOST LIVE: Transform copy tracking layout button into functional resets
       transformToStartNewGameButton();
     });
 
@@ -104,7 +104,7 @@ window.addEventListener('load', function() {
   }
 
   // ==========================================================================
-  // SHARE LINK (Initial Baseline Setup for Host Only)
+  // SHARE LINK (Baseline Operations Setup)
   // ==========================================================================
   if (copyBtn) {
     copyBtn.onclick = function() {
@@ -333,7 +333,7 @@ window.addEventListener('load', function() {
   }
 
   // ==========================================================================
-  // SUPPLY DEPOT & TRASH BIN
+  // SUPPLY DEPOT & TRASH BIN (Updated loop sequence for a 3x3 layout alignment)
   // ==========================================================================
   const supplyGrid = document.getElementById('supply-grid');
   const trashBin = document.getElementById('trash-bin');
@@ -347,12 +347,12 @@ window.addEventListener('load', function() {
     { color: 'black',       label: 'D' },
     { color: 'grey',        label: 'X' },
     { color: 'light-green', label: 'AREA' },
-    { color: 'grey',        label: 'AREA' },
-    null 
+    { color: 'grey',        label: 'AREA' }
   ];
 
   if (supplyGrid) {
-    for (let i = 0; i < 10; i++) {
+    // Exactly 9 items to populate the 3x3 track metrics cleanly
+    for (let i = 0; i < 9; i++) {
       const slot = document.createElement('div');
       slot.classList.add('supply-slot');
       

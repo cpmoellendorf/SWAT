@@ -13,6 +13,9 @@ body {
    DYNAMIC MINI-MAP (Shared Board)
    ========================================================================== */
 #mini-map-container {
+  position: absolute;
+  top: 15px;
+  left: 15px;
   background-color: #222222;
   padding: 8px;
   border-radius: 6px;
@@ -21,8 +24,8 @@ body {
   z-index: 100;
   display: flex;
   flex-direction: column;
-  width: 260px; /* Matched precisely to the guide-panel width */
-  box-sizing: border-box;
+  width: clamp(200px, 20vw, 340px);
+  height: auto;
 }
 
 #mini-map-title {
@@ -40,8 +43,8 @@ body {
   grid-template-rows: repeat(11, 1fr);
   width: 100%;
   aspect-ratio: 15 / 11;
-  gap: 2px;                   /* 2px track gaps matching the main board line weight */
-  background-color: #f6f6f6;  /* Light grey line base matching the main board */
+  gap: 1px;
+  background-color: #cccccc;
 }
 
 #mini-map .cell {
@@ -58,7 +61,7 @@ body {
   box-sizing: border-box;
   max-width: none;
   max-height: none;
-  overflow: visible;         /* CHANGED from hidden to visible so borders render into gaps */
+  overflow: hidden;
 }
 
 #mini-map .cell:hover {
@@ -79,7 +82,6 @@ body {
   height: 100%;
 }
 
-/* Fixed Token Sizes inside Dynamic Mini-Map Cells */
 #mini-map .token {
   flex-basis: 12px;
   width: 12px;
@@ -160,7 +162,7 @@ body {
   height: calc(100% + 4px);
   background-color: #000000;
   z-index: 10;
-  pointer-events: none;    /* Fixes drag and drop: lets mouse events pass through to the cell */
+  pointer-events: none;
 }
 
 .cell[data-wall-bottom="true"]::before {
@@ -172,7 +174,7 @@ body {
   width: calc(100% + 4px); 
   background-color: #000000;
   z-index: 10;
-  pointer-events: none;    /* Fixes drag and drop: lets mouse events pass through to the cell */
+  pointer-events: none;
 }
 
 /* ==========================================================================
@@ -187,7 +189,7 @@ body {
   height: calc(100% + 4px);
   border-right: 2px dashed #8B4513;
   z-index: 15;
-  pointer-events: none;    /* Fixes drag and drop: lets mouse events pass through to the cell */
+  pointer-events: none;
 }
 
 .cell[data-window-bottom="true"]::before {
@@ -199,7 +201,7 @@ body {
   width: calc(100% + 4px);
   border-bottom: 2px dashed #8B4513;
   z-index: 15;
-  pointer-events: none;    /* Fixes drag and drop: lets mouse events pass through to the cell */
+  pointer-events: none;
 }
 
 /* ==========================================================================
@@ -258,13 +260,11 @@ body {
 .token.grey        { background-color: #666666; color: #ffffff; }
 .token.light-green { background-color: #70e000; color: #1a1a1a; }
 
-/* Precise typography downscaling for words like 'AREA' */
 .token.light-green,
 .token.grey {
   font-size: 7px;
 }
 
-/* Scale down even further when tokens are multiple-stacked inside one grid cell */
 .cell:has(.token:nth-child(2)) .token.light-green,
 .cell:has(.token:nth-child(2)) .token.grey {
   font-size: 5px;
@@ -279,18 +279,15 @@ body {
 .main-game-layout {
   display: flex;
   flex-direction: row;
-  align-items: flex-start; /* Aligns all structural columns to the top */
+  align-items: center;
   gap: 40px;
   margin-top: 20px;
-  flex-wrap: nowrap;
 }
 
 .guide-sidebar-wrapper {
   display: flex;
   flex-direction: column;
-  justify-content: flex-start;
-  align-items: center;
-  gap: 20px; /* Clean tracking space between Mini-map and Guide Sheet */
+  gap: 20px;
 }
 
 .sidebar-panel {
@@ -301,14 +298,14 @@ body {
 }
 
 /* ==========================================================================
-   SUPPLY DEPOT
+   SUPPLY DEPOT (Updated to a clean 3x3 Grid Layout)
    ========================================================================== */
 #supply-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  grid-template-rows: repeat(5, 1fr);
-  width: 100px;
-  height: 250px;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+  width: 120px;
+  height: 120px;
   gap: 2px;
   background-color: #333333;
 }
