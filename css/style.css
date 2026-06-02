@@ -306,6 +306,7 @@ body {
   flex-direction: column;
   font-family: sans-serif;
   user-select: none;
+  pointer-events: auto; /* Changed from none to allow click processing globally */
 }
 
 .guide-header {
@@ -378,7 +379,7 @@ body {
   font-size: 0.7rem;
   font-weight: bold;
   cursor: pointer;
-  pointer-events: auto; /* Enables clicks, despite parent guide-panel layout controls */
+  pointer-events: auto !important; /* Forces interactions to always stay registered */
   transition: background-color 0.15s ease, filter 0.15s ease;
 }
 
@@ -388,7 +389,7 @@ body {
 .action-bar.a-red   { background-color: #d90429; }
 .action-bar.a-orange{ background-color: #f77f00; }
 
-/* Muted state modifier: Desaturates color and drops brightness to a clean dark-grey silhouette */
+/* Muted state modifier */
 .action-bar.muted {
   filter: grayscale(100%) brightness(35%);
   border: 1px dashed #555555;
