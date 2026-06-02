@@ -106,7 +106,7 @@ window.addEventListener('load', function() {
       const opponentLetter = letters[data.x];
       const opponentNumber = data.y + 1;
 
-      // Handle Cross-Map Transfer: Token moved completely from Main Board to Mini-Map or vice versa
+      // Handle Cross-Map Transfer
       if (data.isCrossMapTransfer) {
         // 1. Remote clean up from the source map
         const sourceMap = data.sourceIsMiniMap ? miniMap : board;
@@ -115,19 +115,22 @@ window.addEventListener('load', function() {
           oldCell.children[data.tokenIndex].remove();
         }
 
-        // 2. Remote instantiate onto the destination map
-        const destMap = data.isMiniMap ? miniMap : board;
-        const targetCell = destMap.querySelector(`.cell[data-x="${data.x}"][data-y="${data.y}"]`);
-        if (targetCell) {
-          const remoteToken = document.createElement('div');
-          remoteToken.className = `token ${data.color}`;
-          remoteToken.innerText = data.textLabel || '';
-          remoteToken.setAttribute('draggable', 'true');
-          bindTokenDragEvents(remoteToken, false);
-          targetCell.appendChild(remoteToken);
+        // 2. Instantiate onto the destination map ONLY if it lands on the shared mini-map.
+        // Private board placements stay hidden from the opponent!
+        if (data.isMiniMap) {
+          const targetCell = miniMap.querySelector(`.cell[data-x="${data.x}"][data-y="${data.y}"]`);
+          if (targetCell) {
+            const remoteToken = document.createElement('div');
+            remoteToken.className = `token ${data.color}`;
+            remoteToken.innerText = data.textLabel || '';
+            remoteToken.setAttribute('draggable', 'true');
+            bindTokenDragEvents(remoteToken, false);
+            targetCell.appendChild(remoteToken);
+          }
+          console.log(`📡 RADAR ALERT: Opponent moved a token onto the Shared Mini-Map at ${opponentLetter}${opponentNumber}.`);
+        } else {
+          console.log(`📡 RADAR ALERT: Opponent pulled a token off the Shared Mini-Map into their private view.`);
         }
-        
-        console.log(`📡 RADAR ALERT: Opponent moved a token across maps to ${data.isMiniMap ? 'Mini-Map' : 'Main Board'} ${opponentLetter}${opponentNumber}.`);
         return;
       }
 
@@ -236,7 +239,7 @@ window.addEventListener('load', function() {
         cell.appendChild(draggedToken);
 
         if (isCrossMap) {
-          // Send special packet indicating map swap so the client recreates/destroys properly
+          // Send cross map command. Receiver setup determines whether to draw it based on destination visibility.
           sendNetworkData({
             isCrossMapTransfer: true,
             sourceIsMiniMap: sourceIsMiniMap,
