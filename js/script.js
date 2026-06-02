@@ -315,4 +315,14 @@ window.addEventListener('load', function() {
     });
   }
 
+  // ==========================================================================
+  // INTERACTIVE TACTICAL GUIDE SHEET (Action Bar Click Listeners)
+  // ==========================================================================
+  const actionBars = document.querySelectorAll('.action-bar');
+  actionBars.forEach(bar => {
+    bar.addEventListener('click', function() {
+      this.classList.toggle('muted');
+    });
+  });
+
 });
