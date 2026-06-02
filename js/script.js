@@ -245,60 +245,26 @@ window.addEventListener('load', function() {
         miniCellOrLabel.dataset.y = gameY;
 
         // ==========================================================================
-        // EXAMPLE WALLS AND WINDOW MAP LAYOUT
-        // Coordinates run from gameX: 0 to 14 (Columns A-N) and gameY: 0 to 9 (Rows 1-10)
+        // INSTANT VISUAL WALL TEST
+        // Targets the very top-left playable cells of your board
         // ==========================================================================
 
-        // --- Room 1 Walls (Top Left Enclosure) ---
-        // Top perimeter wall line
-        if (gameY === 1 && gameX >= 2 && gameX <= 6) {
-          mainCellOrLabel.setAttribute('data-wall-bottom', 'true');
-          miniCellOrLabel.setAttribute('data-wall-bottom', 'true');
-        }
-        // Left room border with a window placement
-        if (gameX === 1 && gameY >= 2 && gameY <= 5) {
-          if (gameY === 3) {
-            // Adds a brown tactical window breakout on the right border line
-            mainCellOrLabel.setAttribute('data-window-right', 'true');
-            miniCellOrLabel.setAttribute('data-window-right', 'true');
-          } else {
-            mainCellOrLabel.setAttribute('data-wall-right', 'true');
-            miniCellOrLabel.setAttribute('data-wall-right', 'true');
-          }
-        }
-        // Right room border with an open doorway at Row 4
-        if (gameX === 6 && gameY >= 2 && gameY <= 5) {
-          if (gameY !== 4) { // Skips row 4 to naturally leave an open door gap
-            mainCellOrLabel.setAttribute('data-wall-right', 'true');
-            miniCellOrLabel.setAttribute('data-wall-right', 'true');
-          }
-        }
-        // Bottom perimeter wall line
-        if (gameY === 5 && gameX >= 2 && gameX <= 6) {
+        // 1. This will put a thick solid black line under cell A1 (gameX: 0, gameY: 0)
+        if (gameX === 0 && gameY === 0) {
           mainCellOrLabel.setAttribute('data-wall-bottom', 'true');
           miniCellOrLabel.setAttribute('data-wall-bottom', 'true');
         }
 
-        // --- Divider Walls & Long Hallways ---
-        // Center dividing long line running vertically down column H (gameX === 7)
-        if (gameX === 7 && gameY >= 1 && gameY <= 8) {
-          if (gameY !== 4 && gameY !== 5) { // Doorway gap in the middle of the hallway
-            mainCellOrLabel.setAttribute('data-wall-right', 'true');
-            miniCellOrLabel.setAttribute('data-wall-right', 'true');
-          }
+        // 2. This will put a thick solid black line to the right of cell B1 (gameX: 1, gameY: 0)
+        if (gameX === 1 && gameY === 0) {
+          mainCellOrLabel.setAttribute('data-wall-right', 'true');
+          miniCellOrLabel.setAttribute('data-wall-right', 'true');
         }
 
-        // --- Room 2 Walls (Right Side Enclosure) ---
-        // Horizontal separation line cutting through columns J to M
-        if (gameY === 4 && gameX >= 9 && gameX <= 12) {
-          if (gameX === 11) {
-            // Drop a horizontal window over column L
-            mainCellOrLabel.setAttribute('data-window-bottom', 'true');
-            miniCellOrLabel.setAttribute('data-window-bottom', 'true');
-          } else {
-            mainCellOrLabel.setAttribute('data-wall-bottom', 'true');
-            miniCellOrLabel.setAttribute('data-wall-bottom', 'true');
-          }
+        // 3. This will put a dashed brown window line under cell C1 (gameX: 2, gameY: 0)
+        if (gameX === 2 && gameY === 0) {
+          mainCellOrLabel.setAttribute('data-window-bottom', 'true');
+          miniCellOrLabel.setAttribute('data-window-bottom', 'true');
         }
 
         configureGridCellEvents(mainCellOrLabel, gameX, gameY, false);
