@@ -46,6 +46,7 @@ window.addEventListener('load', function() {
         window.location.hash = id;
         statusText.innerText = "Ready! Copy link and send to Player 2.";
         if (guideCard) guideCard.classList.remove('attack');
+        if (copyBtn) copyBtn.style.display = 'inline-block'; // Ensure it's visible to host
       } else {
         // Guest side (Player 2 = Attack)
         if (guideCard) {
@@ -53,6 +54,12 @@ window.addEventListener('load', function() {
           const header = guideCard.querySelector('.guide-header');
           if (header) header.innerText = "ATTACK";
         }
+        
+        // REMOVE / HIDE COPY LINK BUTTON FOR THE ATTACKER (GUEST)
+        if (copyBtn) {
+          copyBtn.style.display = 'none';
+        }
+        
         connectToHost();
       }
     });
@@ -116,7 +123,6 @@ window.addEventListener('load', function() {
         }
 
         // 2. Instantiate onto the destination map ONLY if it lands on the shared mini-map.
-        // Private board placements stay hidden from the opponent!
         if (data.isMiniMap) {
           const targetCell = miniMap.querySelector(`.cell[data-x="${data.x}"][data-y="${data.y}"]`);
           if (targetCell) {
@@ -239,7 +245,6 @@ window.addEventListener('load', function() {
         cell.appendChild(draggedToken);
 
         if (isCrossMap) {
-          // Send cross map command. Receiver setup determines whether to draw it based on destination visibility.
           sendNetworkData({
             isCrossMapTransfer: true,
             sourceIsMiniMap: sourceIsMiniMap,
