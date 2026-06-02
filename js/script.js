@@ -3,9 +3,10 @@ window.addEventListener('load', function() {
   // ==========================================================================
   // GLOBALS
   // ==========================================================================
-  const letters = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N'];
+  const letters = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O'];
   const board = document.getElementById('game-board');
-  const columns = 5;
+  const miniMap = document.getElementById('mini-map');
+  const columns = 16;
   const rows = 11;
   const totalCells = columns * rows;
 
@@ -49,7 +50,8 @@ window.addEventListener('load', function() {
         // Guest side (Player 2 = Attack)
         if (guideCard) {
           guideCard.classList.add('attack');
-          guideCard.querySelector('.guide-header').innerText = "ATTACK";
+          const header = guideCard.querySelector('.guide-header');
+          if (header) header.innerText = "ATTACK";
         }
         connectToHost();
       }
@@ -80,16 +82,18 @@ window.addEventListener('load', function() {
   // ==========================================================================
   // SHARE LINK
   // ==========================================================================
-  copyBtn.addEventListener('click', () => {
-    navigator.clipboard.writeText(window.location.href).then(() => {
-      const oldText = statusText.innerText;
-      statusText.innerText = "📋 Link Copied to Clipboard!";
-      setTimeout(() => { statusText.innerText = oldText; }, 3000);
+  if (copyBtn) {
+    copyBtn.addEventListener('click', () => {
+      navigator.clipboard.writeText(window.location.href).then(() => {
+        const oldText = statusText.innerText;
+        statusText.innerText = "📋 Link Copied to Clipboard!";
+        setTimeout(() => { statusText.innerText = oldText; }, 3000);
+      });
     });
-  });
+  }
 
   // ==========================================================================
-  // NETWORK
+  // NETWORK RECEIVER & SYNC ENGINE
   // ==========================================================================
   function sendNetworkData(payload) {
     if (connection && connection.open) {
@@ -101,6 +105,33 @@ window.addEventListener('load', function() {
     connection.on('data', (data) => {
       const opponentLetter = letters[data.x];
       const opponentNumber = data.y + 1;
+
+      if (data.isMiniMap) {
+        const targetCell = miniMap.querySelector(`.cell[data-x="${data.x}"][data-y="${data.y}"]`);
+        if (!targetCell) return;
+
+        if (data.isNew) {
+          const remoteToken = document.createElement('div');
+          remoteToken.className = `token ${data.color}`;
+          remoteToken.setAttribute('draggable', 'true');
+          bindTokenDragEvents(remoteToken, false);
+          targetCell.appendChild(remoteToken);
+        } else if (data.isDelete) {
+          const oldCell = miniMap.querySelector(`.cell[data-x="${data.oldX}"][data-y="${data.oldY}"]`);
+          if (oldCell && oldCell.children[data.tokenIndex]) {
+            oldCell.children[data.tokenIndex].remove();
+          }
+        } else {
+          const oldCell = miniMap.querySelector(`.cell[data-x="${data.oldX}"][data-y="${data.oldY}"]`);
+          if (oldCell) {
+            const tokenToMove = Array.from(oldCell.children).find(child => child.classList.contains(data.color || 'token'));
+            if (tokenToMove) {
+              targetCell.appendChild(tokenToMove);
+            }
+          }
+        }
+        return;
+      }
 
       if (data.isNew) {
         console.log(`📡 RADAR ALERT: Opponent instantiated a token on THEIR board at ${opponentLetter}${opponentNumber}.`);
@@ -137,7 +168,7 @@ window.addEventListener('load', function() {
   // ==========================================================================
   // GRID CELL EVENT CONFIGURATION
   // ==========================================================================
-  function configureGridCellEvents(cell, gameX, gameY) {
+  function configureGridCellEvents(cell, gameX, gameY, isMiniMapBoard) {
     cell.addEventListener('dragover', function(event) {
       event.preventDefault();
       const isIllegalZone = cell.matches('[data-wall-right="true"], [data-wall-bottom="true"], [data-window-right="true"], [data-window-bottom="true"]');
@@ -151,51 +182,81 @@ window.addEventListener('load', function() {
       const isWallOrWindow = cell.matches('[data-wall-right="true"], [data-wall-bottom="true"], [data-window-right="true"], [data-window-bottom="true"]');
       if (isWallOrWindow) return;
 
+      const sourceIsMiniMap = !!draggedToken.parentElement.closest('#mini-map');
+      if (!isSupplyToken && (sourceIsMiniMap !== isMiniMapBoard)) return;
+
+      const colorClass = Array.from(draggedToken.classList).find(c => c !== 'token' && c !== 'dragging') || '';
+
       if (isSupplyToken) {
         const tokenClone = draggedToken.cloneNode(true);
         tokenClone.classList.remove('dragging');
-        const colorClass = Array.from(draggedToken.classList).find(c => c !== 'token' && c !== 'dragging') || '';
 
         bindTokenDragEvents(tokenClone, false);
         cell.appendChild(tokenClone);
 
-        sendNetworkData({ isNew: true, color: colorClass, x: gameX, y: gameY });
-        console.log(`You placed a token at ${letters[gameX]}${gameY + 1}.`);
+        if (isMiniMapBoard) {
+          sendNetworkData({ isMiniMap: true, isNew: true, color: colorClass, x: gameX, y: gameY });
+          console.log(`Shared Mini-Map updated: Added token at ${letters[gameX]}${gameY + 1}.`);
+        } else {
+          sendNetworkData({ isNew: true, color: colorClass, x: gameX, y: gameY });
+          console.log(`You placed a token at ${letters[gameX]}${gameY + 1}.`);
+        }
       } else {
         const oldX = parseInt(draggedToken.parentElement.dataset.x);
         const oldY = parseInt(draggedToken.parentElement.dataset.y);
 
         cell.appendChild(draggedToken);
 
-        sendNetworkData({ isNew: false, oldX: oldX, oldY: oldY, x: gameX, y: gameY });
-        console.log(`You moved your token to ${letters[gameX]}${gameY + 1}.`);
+        if (isMiniMapBoard) {
+          sendNetworkData({ isMiniMap: true, isNew: false, color: colorClass, oldX: oldX, oldY: oldY, x: gameX, y: gameY });
+          console.log(`Shared Mini-Map updated: Moved token to ${letters[gameX]}${gameY + 1}.`);
+        } else {
+          sendNetworkData({ isNew: false, oldX: oldX, oldY: oldY, x: gameX, y: gameY });
+          console.log(`You moved your token to ${letters[gameX]}${gameY + 1}.`);
+        }
       }
     });
   }
 
   // ==========================================================================
-  // GRID GENERATOR
+  // GRID GENERATORS (Simultaneous Twin Build)
   // ==========================================================================
-  for (let i = 0; i < totalCells; i++) {
-    const col = i % columns;
-    const row = Math.floor(i / columns);
+  if (board && miniMap) {
+    for (let i = 0; i < totalCells; i++) {
+      const col = i % columns;
+      const row = Math.floor(i / columns);
 
-    if (row === 0 && col === 0) board.appendChild(createDiv('label', ''));
-    else if (row === 0)         board.appendChild(createDiv('label', letters[col - 1]));
-    else if (col === 0)         board.appendChild(createDiv('label', row));
-    else {
-      const cell = createDiv('cell', '');
-      const gameX = col - 1;
-      const gameY = row - 1;
-      cell.dataset.x = gameX;
-      cell.dataset.y = gameY;
+      let labelText = '';
+      if (row === 0 && col !== 0) labelText = letters[col - 1];
+      if (col === 0 && row !== 0) labelText = row;
 
-      // Map design presets
-      if (gameX === 0 && gameY === 0) cell.setAttribute('data-wall-right', 'true');
-      if (gameX === 1 && gameY === 1) cell.setAttribute('data-window-right', 'true');
+      const mainCellOrLabel = (row === 0 || col === 0) ? createDiv('label', labelText) : createDiv('cell', '');
+      const miniCellOrLabel = (row === 0 || col === 0) ? createDiv('label', labelText) : createDiv('cell', '');
 
-      configureGridCellEvents(cell, gameX, gameY);
-      board.appendChild(cell);
+      if (row !== 0 && col !== 0) {
+        const gameX = col - 1;
+        const gameY = row - 1;
+        
+        mainCellOrLabel.dataset.x = gameX;
+        mainCellOrLabel.dataset.y = gameY;
+        miniCellOrLabel.dataset.x = gameX;
+        miniCellOrLabel.dataset.y = gameY;
+
+        if (gameX === 0 && gameY === 0) {
+          mainCellOrLabel.setAttribute('data-wall-right', 'true');
+          miniCellOrLabel.setAttribute('data-wall-right', 'true');
+        }
+        if (gameX === 1 && gameY === 1) {
+          mainCellOrLabel.setAttribute('data-window-right', 'true');
+          miniCellOrLabel.setAttribute('data-window-right', 'true');
+        }
+
+        configureGridCellEvents(mainCellOrLabel, gameX, gameY, false);
+        configureGridCellEvents(miniCellOrLabel, gameX, gameY, true);
+      }
+
+      board.appendChild(mainCellOrLabel);
+      miniMap.appendChild(miniCellOrLabel);
     }
   }
 
@@ -213,36 +274,45 @@ window.addEventListener('load', function() {
   const trashBin = document.getElementById('trash-bin');
   const supplyItems = ['', 'light-blue', 'dark-blue', 'pink', 'red', '', '', '', '', ''];
 
-  for (let i = 0; i < 10; i++) {
-    const slot = document.createElement('div');
-    slot.classList.add('supply-slot');
-    if (supplyItems[i] !== undefined) {
-      const supplyToken = document.createElement('div');
-      supplyToken.classList.add('token');
-      supplyToken.setAttribute('draggable', 'true');
-      if (supplyItems[i]) supplyToken.classList.add(supplyItems[i]);
-      bindTokenDragEvents(supplyToken, true);
-      slot.appendChild(supplyToken);
+  if (supplyGrid) {
+    for (let i = 0; i < 10; i++) {
+      const slot = document.createElement('div');
+      slot.classList.add('supply-slot');
+      if (supplyItems[i] !== undefined) {
+        const supplyToken = document.createElement('div');
+        supplyToken.classList.add('token');
+        supplyToken.setAttribute('draggable', 'true');
+        if (supplyItems[i]) supplyToken.classList.add(supplyItems[i]);
+        bindTokenDragEvents(supplyToken, true);
+        slot.appendChild(supplyToken);
+      }
+      supplyGrid.appendChild(slot);
     }
-    supplyGrid.appendChild(slot);
   }
 
-  trashBin.addEventListener('dragover', function(event) {
-    event.preventDefault();
-    event.dataTransfer.dropEffect = 'move';
-  });
+  if (trashBin) {
+    trashBin.addEventListener('dragover', function(event) {
+      event.preventDefault();
+      event.dataTransfer.dropEffect = 'move';
+    });
 
-  trashBin.addEventListener('drop', function(event) {
-    event.preventDefault();
-    if (draggedToken && !isSupplyToken) {
-      const oldX = parseInt(draggedToken.parentElement.dataset.x);
-      const oldY = parseInt(draggedToken.parentElement.dataset.y);
-      const tokenIndex = Array.from(draggedToken.parentElement.children).indexOf(draggedToken);
+    trashBin.addEventListener('drop', function(event) {
+      event.preventDefault();
+      if (draggedToken && !isSupplyToken) {
+        const oldX = parseInt(draggedToken.parentElement.dataset.x);
+        const oldY = parseInt(draggedToken.parentElement.dataset.y);
+        const tokenIndex = Array.from(draggedToken.parentElement.children).indexOf(draggedToken);
+        const isMiniMapBoard = !!draggedToken.parentElement.closest('#mini-map');
 
-      draggedToken.remove();
+        draggedToken.remove();
 
-      sendNetworkData({ isDelete: true, oldX: oldX, oldY: oldY, tokenIndex: tokenIndex });
-    }
-  });
+        if (isMiniMapBoard) {
+          sendNetworkData({ isMiniMap: true, isDelete: true, oldX: oldX, oldY: oldY, tokenIndex: tokenIndex });
+        } else {
+          sendNetworkData({ isDelete: true, oldX: oldX, oldY: oldY, tokenIndex: tokenIndex });
+        }
+      }
+    });
+  }
 
 });

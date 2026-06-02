@@ -6,15 +6,85 @@ body {
   flex-direction: column;
   align-items: center;
   padding: 20px;
+  margin: 0;
+}
+
+/* ==========================================================================
+   DYNAMIC MINI-MAP (Shared Board)
+   ========================================================================== */
+#mini-map-container {
+  position: absolute;
+  top: 15px;
+  left: 15px;
+  background-color: #222222;
+  padding: 8px;
+  border-radius: 6px;
+  border: 1px solid #444444;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  width: clamp(200px, 20vw, 340px);
+  height: auto;
+}
+
+#mini-map-title {
+  font-size: 0.75rem;
+  font-weight: bold;
+  color: #ffffff;
+  margin-bottom: 4px;
+  text-align: center;
+  letter-spacing: 1px;
+}
+
+#mini-map {
+  display: grid;
+  grid-template-columns: repeat(16, 1fr);
+  grid-template-rows: repeat(11, 1fr);
+  width: 100%;
+  aspect-ratio: 16 / 11;
+  gap: 1px;
+  background-color: #444444;
+}
+
+#mini-map .cell {
+  background-color: #ffffff;
+  max-width: none;
+  max-height: none;
+}
+
+#mini-map .cell:hover {
+  background-color: #3a3a3a;
+}
+
+#mini-map .label {
+  background-color: #111111;
+  font-size: 0.55rem;
+}
+
+/* Fixed Token Sizes inside Dynamic Mini-Map Cells */
+#mini-map .token {
+  flex-basis: 12px;
+  width: 12px;
+  height: 12px;
+  max-width: 12px;
+  max-height: 12px;
+}
+
+#mini-map .cell:has(.token:nth-child(2)) .token {
+  flex-basis: 8px;
+  width: 8px;
+  height: 8px;
+  max-width: 8px;
+  max-height: 8px;
 }
 
 /* ==========================================================================
    GAME BOARD
    ========================================================================== */
-
 #game-board {
   display: grid;
-  grid-template-columns: repeat(15, 1fr);
+  grid-template-columns: repeat(16, 1fr);
   grid-template-rows: repeat(11, 1fr);
   width: 640px;
   height: 440px;
@@ -29,8 +99,6 @@ body {
   height: 100%;
   cursor: pointer;
   position: relative;
-
-  /* Flex layout for stacked tokens */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -38,8 +106,6 @@ body {
   gap: 1px;
   padding: 1px;
   box-sizing: border-box;
-
-  /* Prevent cells from growing or resizing */
   max-width: 38.125px;
   max-height: 38.18px;
   overflow: hidden;
@@ -49,7 +115,6 @@ body {
   background-color: #e0e0e0;
 }
 
-/* Static tracking edge labels (A–O and 1–10) */
 .label {
   background-color: #222222;
   color: #ffffff;
@@ -65,9 +130,8 @@ body {
 }
 
 /* ==========================================================================
-   WALLS (Solid black lines drawn into the 2px grid gaps)
+   WALLS
    ========================================================================== */
-
 .cell[data-wall-right="true"]::after {
   content: "";
   position: absolute;
@@ -91,9 +155,8 @@ body {
 }
 
 /* ==========================================================================
-   WINDOWS (Brown dashed lines drawn into the 2px grid gaps)
+   WINDOWS
    ========================================================================== */
-
 .cell[data-window-right="true"]::after {
   content: "";
   position: absolute;
@@ -119,14 +182,12 @@ body {
 /* ==========================================================================
    TOKENS
    ========================================================================== */
-
 .token {
   border-radius: 50%;
   background-color: #21781e;
   z-index: 5;
   user-select: none;
   cursor: grab;
-
   flex-grow: 0;
   flex-shrink: 1;
   flex-basis: 26px;
@@ -136,7 +197,6 @@ body {
   max-height: 26px;
 }
 
-/* Two tokens in a cell: shrink to 16px */
 .cell:has(.token:nth-child(2)) .token {
   flex-basis: 16px;
   width: 16px;
@@ -145,7 +205,6 @@ body {
   max-height: 16px;
 }
 
-/* Three or more tokens in a cell: shrink to 11px */
 .cell:has(.token:nth-child(3)) .token {
   flex-basis: 11px;
   width: 11px;
@@ -154,24 +213,20 @@ body {
   max-height: 11px;
 }
 
-/* Prevent child elements from intercepting drag events */
 .token * { pointer-events: none; }
 .token   { pointer-events: auto; }
 
-/* Player color variants */
 .token.light-blue { background-color: #00b4d8; }
 .token.dark-blue  { background-color: #070bce; }
 .token.pink       { background-color: #ff85a1; }
 .token.red        { background-color: #d90429; }
 
-/* Drag states */
 .token:active   { cursor: grabbing; }
 .token.dragging { opacity: 0.4; }
 
 /* ==========================================================================
    LAYOUT
    ========================================================================== */
-
 .main-game-layout {
   display: flex;
   flex-direction: row;
@@ -198,7 +253,6 @@ body {
 /* ==========================================================================
    SUPPLY DEPOT
    ========================================================================== */
-
 #supply-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -241,10 +295,9 @@ body {
 /* ==========================================================================
    GUIDE CARD (Tactical Cheat Sheet)
    ========================================================================== */
-
 .guide-panel {
   width: 260px;
-  height: 240px;
+  height: 275px; 
   background-color: #222222;
   border-radius: 6px;
   overflow: hidden;
@@ -302,7 +355,7 @@ body {
 
 .guide-column.right-bars {
   justify-content: flex-start;
-  gap: 14px;
+  gap: 6px;
   padding-top: 4px;
 }
 
@@ -312,36 +365,41 @@ body {
   font-size: 0.8rem;
   letter-spacing: 1px;
   text-align: center;
-  margin-bottom: -5px;
+  margin-bottom: 2px;
   border-bottom: 1px solid #333333;
   padding-bottom: 4px;
 }
 
 .action-bar {
-  height: 24px;
+  height: 22px;
   border-radius: 4px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   font-weight: bold;
 }
 
-.action-bar.light {
-  background-color: #00b4d8;
-  opacity: 0.6;
+/* Action Bar Setup for layout variations */
+.action-bar.d-light { background-color: #00b4d8; opacity: 0.6; }
+.action-bar.d-dark  { background-color: #070bce; }
+.action-bar.a-red   { background-color: #d90429; }
+.action-bar.a-orange{ background-color: #f77f00; }
+
+/* Structural visibility configurations mapping the variants */
+.guide-panel.attack .d-light,
+.guide-panel.attack .d-dark {
+  display: none !important;
 }
 
-.action-bar.dark {
-  background-color: #070bce;
-  color: #ffffff;
-  letter-spacing: 1px;
+.guide-panel:not(.attack) .a-red,
+.guide-panel:not(.attack) .a-orange {
+  display: none !important;
 }
 
 /* ==========================================================================
-   GUIDE CARD — ATTACK VARIANT
+   GUIDE CARD — ATTACK VARIANT STATE MUTATIONS
    ========================================================================== */
-
 .guide-panel.attack .guide-header {
   background-color: #f77f00;
   color: #ffffff;
@@ -350,13 +408,4 @@ body {
 .guide-panel.attack .guide-column.left-info strong,
 .guide-panel.attack .bars-header {
   color: #f77f00;
-}
-
-.guide-panel.attack .action-bar.light {
-  background-color: #f77f00;
-  opacity: 0.6;
-}
-
-.guide-panel.attack .action-bar.dark {
-  display: none;
 }
