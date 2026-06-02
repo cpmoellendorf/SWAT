@@ -1,450 +1,237 @@
-window.addEventListener('load', function () {
+// ==========================================================================
+// FREE PEER-TO-PEER MULTIPLAYER ENGINE
+// ==========================================================================
+const letters = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O'];
+const board = document.getElementById('game-board');
+const columns = 16; 
+const rows = 11;
+const totalCells = columns * rows;
 
-  // ==========================================================================
-  // UTILITIES
-  // ==========================================================================
+let peer = null;
+let connection = null;
+let draggedToken = null;
+let isSupplyToken = false;
 
-  function createDiv(className, text) {
-    const el = document.createElement('div');
-    el.className = className;
-    el.innerText = text;
-    return el;
-  }
+// Read the room ID from the link hash (e.g. website.html#room-xyz)
+let targetPeerId = window.location.hash.substring(1);
 
-  function getCell(x, y) {
-    return board.querySelector(`.cell[data-x="${x}"][data-y="${y}"]`);
-  }
+const copyBtn = document.getElementById('copy-link-btn');
+const statusText = document.getElementById('link-status');
 
-  // ==========================================================================
-  // CONSTANTS
-  // ==========================================================================
-
-  const LETTERS      = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O'];
-  const COLUMNS      = 16;
-  const ROWS         = 11;
-  // Roles assigned to guests in join order. Host is always defense-1.
-  const ROLE_SLOTS   = ['attack-1', 'defense-2', 'attack-2'];
-  const STUN_CONFIG  = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
-  const PEER_OPTIONS = { debug: 2, config: STUN_CONFIG };
-
-  // ==========================================================================
-  // DOM REFERENCES
-  // ==========================================================================
-
-  const board      = document.getElementById('game-board');
-  const supplyGrid = document.getElementById('supply-grid');
-  const trashBin   = document.getElementById('trash-bin');
-  const copyBtn    = document.getElementById('copy-link-btn');
-  const statusText = document.getElementById('link-status');
-  const guideCard  = document.querySelector('.guide-panel');
-
-  // ==========================================================================
-  // MUTABLE STATE
-  // ==========================================================================
-
-  let peer              = null;
-  let activeConnections = [];
-  let myRole            = 'defense-1'; // Host default; guests receive their role via assign-role
-  let draggedToken      = null;
-  let isSupplyToken     = false;
-
-  // Host-only: maps peerId → assigned role so assignments are deterministic
-  // even if two guests connect near-simultaneously.
-  const roleRegistry = {};
-
-  // ==========================================================================
-  // NETWORK — INITIALIZATION
-  // ==========================================================================
-
-  let roomHash = window.location.hash.substring(1);
-
-  if (!roomHash) {
-    // Player 1: generate room, become host
-    roomHash = Math.random().toString(36).substring(2, 9);
-    window.location.hash = roomHash;
-
-    peer = new Peer(roomHash, PEER_OPTIONS);
-    peer.on('open', () => {
-      statusText.innerText = 'Lobby created! Share this link with Players 2, 3, and 4 (0/3 joined).';
-
-      // Poll every second: rebuild the roster and push it to all connected guests.
-      // This is the single source of truth for player count and roles. Guests never
-      // derive the count themselves — they just display whatever the host sends.
-      setInterval(() => {
-        if (activeConnections.length === 0) return;
-        const fullRoster = { [roomHash]: 'defense-1', ...roleRegistry };
-        const syncPayload = { type: 'lobby-sync', roster: fullRoster };
-        sendNetworkData(syncPayload);
-        handleLobbySync(syncPayload);
-      }, 1000);
-    });
-
-  } else {
-    // Players 2–4: join existing room
-    peer = new Peer(PEER_OPTIONS);
-    peer.on('open', () => {
-      statusText.innerText = 'Connecting to lobby...';
-      setupConnectionListeners(peer.connect(roomHash));
-    });
-  }
-
-  // Accept incoming connections from any peer in the mesh
-  peer.on('connection', setupConnectionListeners);
-
-  peer.on('error', (err) => {
-    console.error('Peer error:', err);
-    statusText.innerText = `⚠️ Network error: ${err.type}`;
+if (!targetPeerId) {
+  // --- PLAYER 1 MODE (Host) ---
+  // Connect to free cloud infrastructure to get a unique link ID
+  peer = new Peer();
+  
+  peer.on('open', (id) => {
+    window.location.hash = id;
+    statusText.innerText = "Ready! Copy link and send to Player 2.";
   });
 
-  // ==========================================================================
-  // NETWORK — BROADCAST
-  // ==========================================================================
-
-  function sendNetworkData(payload) {
-    activeConnections.forEach(conn => {
-      if (conn && conn.open) conn.send(payload);
+  // Wait for Player 2 to dial in
+  peer.on('connection', (conn) => {
+    connection = conn;
+    setupConnectionListeners();
+    statusText.innerText = "🟢 Player 2 Connected! Game Live.";
+  });
+} else {
+  // --- PLAYER 2 MODE (Guest) ---
+  // Connect to cloud infrastructure and immediately dial Player 1's hash ID
+  peer = new Peer();
+  
+  peer.on('open', () => {
+    statusText.innerText = "Connecting to Host...";
+    connection = peer.connect(targetPeerId);
+    
+    connection.on('open', () => {
+      setupConnectionListeners();
+      statusText.innerText = "🟢 Connected to Host! Game Live.";
     });
+  });
+}
+
+// Share Link Button Copier
+copyBtn.addEventListener('click', () => {
+  navigator.clipboard.writeText(window.location.href).then(() => {
+    const oldText = statusText.innerText;
+    statusText.innerText = "📋 Link Copied to Clipboard!";
+    setTimeout(() => { statusText.innerText = oldText; }, 3000);
+  });
+});
+
+// Outbound Data Transmitter
+function sendNetworkData(payload) {
+  if (connection && connection.open) {
+    connection.send(payload);
   }
+}
 
-  // ==========================================================================
-  // NETWORK — CONNECTION LIFECYCLE
-  // ==========================================================================
-
-  function setupConnectionListeners(conn) {
-
-    conn.on('open', () => {
-      if (!activeConnections.find(c => c.peer === conn.peer)) {
-        activeConnections.push(conn);
-      }
-
-      // Only the host assigns roles and syncs the lobby
-      if (myRole !== 'defense-1') return;
-
-      // Small delay ensures the data channel is fully open before sending
-      setTimeout(() => {
-
-        // Assign a role if this peer doesn't already have one in the registry.
-        // Using the registry (not activeConnections.length) makes assignment
-        // deterministic even when two guests connect near-simultaneously.
-        if (!roleRegistry[conn.peer]) {
-          const slotIndex = Object.keys(roleRegistry).length; // 0, 1, 2
-          roleRegistry[conn.peer] = ROLE_SLOTS[slotIndex] || 'spectator';
-        }
-        const assignedRole = roleRegistry[conn.peer];
-        conn.send({ type: 'assign-role', role: assignedRole });
-
-        // Introduce this newcomer to all previously connected peers
-        const existingPeerIds = activeConnections
-          .filter(c => c.peer !== conn.peer)
-          .map(c => c.peer);
-
-        if (existingPeerIds.length > 0) {
-          conn.send({ type: 'introduce-peers', peerIds: existingPeerIds });
-        }
-
-        // Build a complete roster from the registry and broadcast it to everyone.
-        // Guests use this authoritative count instead of deriving it from their
-        // own partial connection list (which may not be fully formed yet).
-        const fullRoster = { [roomHash]: 'defense-1', ...roleRegistry };
-        const syncPayload = { type: 'lobby-sync', roster: fullRoster };
-        sendNetworkData(syncPayload);
-        // Apply locally so the host UI stays current too
-        handleLobbySync(syncPayload);
-
-      }, 100);
-    });
-
-    conn.on('data', handleIncomingData);
-
-    conn.on('close', () => {
-      activeConnections = activeConnections.filter(c => c.peer !== conn.peer);
-      // The host polling loop will broadcast the updated roster within 1 second.
-      // Guests just wait for the next sync packet — no action needed here.
-    });
-  }
-
-  // ==========================================================================
-  // NETWORK — INBOUND DATA HANDLER
-  // ==========================================================================
-
-  function handleIncomingData(data) {
-    if (!data) return;
-
-    // --- System signals ---
-    if (data.type === 'assign-role') {
-      myRole = data.role;
-      // applyVisualRoleProperties reads myRole, so update it first
-      applyVisualRoleProperties(data.role);
-      return;
-    }
-
-    if (data.type === 'introduce-peers') {
-      data.peerIds.forEach(id => {
-        if (!activeConnections.find(c => c.peer === id)) {
-          setupConnectionListeners(peer.connect(id));
-        }
-      });
-      return;
-    }
-
-    if (data.type === 'lobby-sync') {
-      handleLobbySync(data);
-      return;
-    }
-
-    // --- Gameplay packets ---
-    const senderTeam = data.senderRole.split('-')[0];
-    const myTeam     = myRole.split('-')[0];
-
-    if (senderTeam === myTeam) {
-      applyTeamMove(data);
-    } else {
-      logEnemyIntel(data);
-    }
-  }
-
-  // ==========================================================================
-  // NETWORK — LOBBY SYNC HANDLER
-  // ==========================================================================
-
-  // Handles a lobby-sync packet for both host and guests.
-  // The roster is the single source of truth for player count and roles,
-  // sent by the host every time someone joins or leaves.
-  function handleLobbySync(data) {
-    const count = Object.keys(data.roster).length;
-    statusText.innerText = `🟢 Players: ${count}/4 — You are ${myRole.toUpperCase()}`;
-  }
-
-  // Apply a teammate's move to the local board
-  function applyTeamMove(data) {
+// Inbound Data Receiver
+function setupConnectionListeners() {
+  connection.on('data', (data) => {
     if (data.isNew) {
-      const cell = getCell(data.x, data.y);
-      if (!cell) return;
-      const token = document.createElement('div');
-      token.classList.add('token');
-      token.setAttribute('draggable', 'true');
-      if (data.color) token.classList.add(data.color);
-      bindTokenDragEvents(token, false);
-      cell.appendChild(token);
-      console.log(`🤝 TEAMMATE placed a token at ${LETTERS[data.x]}${data.y + 1}.`);
-
+      // Mirror fresh entity generation
+      const targetCell = board.querySelector(`.cell[data-x="${data.x}"][data-y="${data.y}"]`);
+      if (targetCell) {
+        const remoteToken = document.createElement('div');
+        remoteToken.classList.add('token');
+        remoteToken.setAttribute('draggable', 'true');
+        if (data.color) remoteToken.classList.add(data.color);
+        bindTokenDragEvents(remoteToken, false);
+        targetCell.appendChild(remoteToken);
+      }
     } else if (data.isDelete) {
-      const cell = getCell(data.oldX, data.oldY);
-      if (!cell) return;
-      const token = cell.children[data.tokenIndex];
-      if (token) token.remove();
-      console.log(`🤝 TEAMMATE deleted a token at ${LETTERS[data.oldX]}${data.oldY + 1}.`);
-
-    } else {
-      const sourceCell = getCell(data.oldX, data.oldY);
-      const targetCell = getCell(data.x, data.y);
-      if (!sourceCell || !targetCell) return;
-      const token = sourceCell.children[data.tokenIndex] || sourceCell.querySelector('.token');
-      if (token) targetCell.appendChild(token);
-      console.log(`🤝 TEAMMATE moved a token to ${LETTERS[data.x]}${data.y + 1}.`);
-    }
-  }
-
-  // Log enemy activity without revealing position
-  function logEnemyIntel(data) {
-    const role = data.senderRole.toUpperCase();
-    if (data.isNew)         console.log(`📡 ENEMY (${role}) placed a token.`);
-    else if (data.isDelete) console.log(`📡 ENEMY (${role}) deleted a token.`);
-    else                    console.log(`📡 ENEMY (${role}) moved a token.`);
-  }
-
-  // ==========================================================================
-  // UI — ROLE VISUALS & LOBBY STATUS
-  // ==========================================================================
-
-  function applyVisualRoleProperties(role) {
-    if (!guideCard) return;
-    const isAttack = role.startsWith('attack');
-    guideCard.classList.toggle('attack', isAttack);
-    guideCard.querySelector('.guide-header').innerText = isAttack
-      ? `ATTACK (${role.toUpperCase()})`
-      : `DEFENSE (${role.toUpperCase()})`;
-    // myRole is already updated before this call, so status reads the new role correctly
-    updateLobbyStatus();
-  }
-
-  function updateLobbyStatus() {
-    const total = activeConnections.length + 1;
-    statusText.innerText = `🟢 Players: ${total}/4 — You are ${myRole.toUpperCase()}`;
-  }
-
-  // ==========================================================================
-  // DRAG & DROP — TOKEN BINDINGS
-  // ==========================================================================
-
-  function bindTokenDragEvents(token, fromSupplyDepot) {
-    token.addEventListener('dragstart', (event) => {
-      draggedToken  = token;
-      isSupplyToken = fromSupplyDepot;
-      event.dataTransfer.effectAllowed = 'move';
-      setTimeout(() => token.classList.add('dragging'), 1);
-    });
-
-    token.addEventListener('dragend', () => {
-      token.classList.remove('dragging');
-      draggedToken  = null;
-      isSupplyToken = false;
-    });
-  }
-
-  // ==========================================================================
-  // DRAG & DROP — CELL EVENTS
-  // ==========================================================================
-
-  const WALL_SELECTOR = [
-    '[data-wall-right="true"]',
-    '[data-wall-bottom="true"]',
-    '[data-window-right="true"]',
-    '[data-window-bottom="true"]',
-  ].join(', ');
-
-  function configureGridCellEvents(cell, gameX, gameY) {
-    cell.addEventListener('dragover', (event) => {
-      event.preventDefault();
-      event.dataTransfer.dropEffect = cell.matches(WALL_SELECTOR) ? 'none' : 'move';
-    });
-
-    cell.addEventListener('drop', (event) => {
-      event.preventDefault();
-      if (!draggedToken || cell.matches(WALL_SELECTOR)) return;
-
-      if (isSupplyToken) {
-        // Clone from supply and place on board
-        const tokenClone = draggedToken.cloneNode(true);
-        tokenClone.classList.remove('dragging');
-        const colorClass = Array.from(draggedToken.classList)
-          .find(c => c !== 'token' && c !== 'dragging') || '';
-        bindTokenDragEvents(tokenClone, false);
-        cell.appendChild(tokenClone);
-
-        sendNetworkData({ isNew: true, color: colorClass, x: gameX, y: gameY, senderRole: myRole });
-        console.log(`You placed a token at ${LETTERS[gameX]}${gameY + 1}.`);
-
-      } else {
-        // Move existing token from one cell to another
-        const oldX        = parseInt(draggedToken.parentElement.dataset.x);
-        const oldY        = parseInt(draggedToken.parentElement.dataset.y);
-        const tokenIndex  = Array.from(draggedToken.parentElement.children).indexOf(draggedToken);
-        cell.appendChild(draggedToken);
-
-        sendNetworkData({ isNew: false, oldX, oldY, tokenIndex, x: gameX, y: gameY, senderRole: myRole });
-        console.log(`You moved a token to ${LETTERS[gameX]}${gameY + 1}.`);
+      // Mirror a deletion trash event
+      const targetCell = board.querySelector(`.cell[data-x="${data.oldX}"][data-y="${data.oldY}"]`);
+      if (targetCell) {
+        const tokenToDelete = targetCell.children[data.tokenIndex];
+        if (tokenToDelete) tokenToDelete.remove();
       }
-    });
-  }
-
-  // ==========================================================================
-  // BOARD — GRID INITIALIZATION
-  // ==========================================================================
-
-  for (let i = 0; i < COLUMNS * ROWS; i++) {
-    const col = i % COLUMNS;
-    const row = Math.floor(i / COLUMNS);
-
-    if (row === 0 && col === 0) {
-      board.appendChild(createDiv('label', ''));
-    } else if (row === 0) {
-      board.appendChild(createDiv('label', LETTERS[col - 1]));
-    } else if (col === 0) {
-      board.appendChild(createDiv('label', row));
     } else {
-      const gameX = col - 1;
-      const gameY = row - 1;
-      const cell  = createDiv('cell', '');
-      cell.dataset.x = gameX;
-      cell.dataset.y = gameY;
-
-      // --- MAP DESIGN PRESETS ---
-      if (gameX === 0 && gameY === 0) cell.setAttribute('data-wall-right',   'true');
-      if (gameX === 1 && gameY === 1) cell.setAttribute('data-window-right', 'true');
-
-      configureGridCellEvents(cell, gameX, gameY);
-      board.appendChild(cell);
+      // Mirror movements and stack transpositions
+      const sourceCell = board.querySelector(`.cell[data-x="${data.oldX}"][data-y="${data.oldY}"]`);
+      const targetCell = board.querySelector(`.cell[data-x="${data.x}"][data-y="${data.y}"]`);
+      
+      if (sourceCell && targetCell) {
+        const remoteTokenToMove = sourceCell.children[data.tokenIndex] || sourceCell.querySelector('.token');
+        if (remoteTokenToMove) targetCell.appendChild(remoteTokenToMove);
+      }
     }
+  });
+
+  connection.on('close', () => {
+    statusText.innerText = "🔴 Opponent disconnected.";
+  });
+}
+
+// ==========================================================================
+// CENTRALIZED COMPONENT DRAG BINDINGS
+// ==========================================================================
+function bindTokenDragEvents(token, fromSupplyDepot) {
+  token.addEventListener('dragstart', function(event) {
+    draggedToken = token;
+    isSupplyToken = fromSupplyDepot;
+    event.dataTransfer.effectAllowed = 'move';
+    setTimeout(() => { token.classList.add('dragging'); }, 1);
+  });
+  
+  token.addEventListener('dragend', function() {
+    token.classList.remove('dragging');
+    draggedToken = null;
+    isSupplyToken = false;
+  });
+}
+
+// ==========================================================================
+// GRID BOARD INTERACTION CAPABILITIES & BOUNDARY LOCKDOWN
+// ==========================================================================
+function configureGridCellEvents(cell, gameX, gameY) {
+  cell.addEventListener('dragover', function(event) {
+    event.preventDefault(); 
+    const isIllegalZone = cell.matches('[data-wall-right="true"], [data-wall-bottom="true"], [data-window-right="true"], [data-window-bottom="true"]');
+    event.dataTransfer.dropEffect = isIllegalZone ? 'none' : 'move'; 
+  });
+
+  cell.addEventListener('drop', function(event) {
+    event.preventDefault();
+    if (!draggedToken) return;
+
+    const isWallOrWindow = cell.matches('[data-wall-right="true"], [data-wall-bottom="true"], [data-window-right="true"], [data-window-bottom="true"]');
+    if (isWallOrWindow) return; 
+
+    if (isSupplyToken) {
+      const tokenClone = draggedToken.cloneNode(true);
+      tokenClone.classList.remove('dragging');
+      const colorClass = Array.from(draggedToken.classList).find(c => c !== 'token' && c !== 'dragging') || '';
+      
+      bindTokenDragEvents(tokenClone, false);
+      cell.appendChild(tokenClone);
+
+      // Transmit new token placement to peer
+      sendNetworkData({ isNew: true, color: colorClass, x: gameX, y: gameY });
+    } else {
+      const oldX = parseInt(draggedToken.parentElement.dataset.x);
+      const oldY = parseInt(draggedToken.parentElement.dataset.y);
+      const tokenIndex = Array.from(draggedToken.parentElement.children).indexOf(draggedToken);
+      
+      cell.appendChild(draggedToken);
+
+      // Transmit token movement path changes to peer
+      sendNetworkData({ isNew: false, oldX: oldX, oldY: oldY, tokenIndex: tokenIndex, x: gameX, y: gameY });
+    }
+  });
+}
+
+// ==========================================================================
+// GRID GENERATOR INITIALIZATION LOOP
+// ==========================================================================
+for (let i = 0; i < totalCells; i++) {
+  const col = i % columns;
+  const row = Math.floor(i / columns);
+
+  if (row === 0 && col === 0) board.appendChild(createDiv('label', ''));
+  else if (row === 0)          board.appendChild(createDiv('label', letters[col - 1]));
+  else if (col === 0)          board.appendChild(createDiv('label', row));
+  
+  else {
+    const cell = createDiv('cell', '');
+    const gameX = col - 1; 
+    const gameY = row - 1; 
+    cell.dataset.x = gameX;
+    cell.dataset.y = gameY;
+    
+    // --- MAP DESIGN PRESETS ---
+    if (gameX === 0 && gameY === 0) cell.setAttribute('data-wall-right', 'true');
+    if (gameX === 1 && gameY === 1) cell.setAttribute('data-window-right', 'true');
+    
+    configureGridCellEvents(cell, gameX, gameY);
+    board.appendChild(cell);
   }
+}
 
-  // ==========================================================================
-  // SUPPLY DEPOT — INITIALIZATION
-  // ==========================================================================
+function createDiv(className, text) {
+  const el = document.createElement('div');
+  el.className = className;
+  el.innerText = text;
+  return el;
+}
 
-  // null entries produce empty slots; color strings produce draggable tokens
-  const SUPPLY_ITEMS = [null, 'light-blue', 'dark-blue', 'pink', 'red', null, null, null, null, null];
+// ==========================================================================
+// SUPPLY DEPOT & TRASH BIN INITIALIZATION
+// ==========================================================================
+const supplyGrid = document.getElementById('supply-grid');
+const trashBin = document.getElementById('trash-bin');
+const supplyItems = ['', 'light-blue', 'dark-blue', 'pink', 'red', '', '', '', '', ''];
 
-  SUPPLY_ITEMS.forEach(color => {
-    const slot = document.createElement('div');
-    slot.classList.add('supply-slot');
+for (let i = 0; i < 10; i++) {
+  const slot = document.createElement('div');
+  slot.classList.add('supply-slot');
+  if (supplyItems[i] !== undefined) {
+    const supplyToken = document.createElement('div');
+    supplyToken.classList.add('token');
+    supplyToken.setAttribute('draggable', 'true');
+    if (supplyItems[i]) supplyToken.classList.add(supplyItems[i]);
+    bindTokenDragEvents(supplyToken, true); 
+    slot.appendChild(supplyToken);
+  }
+  supplyGrid.appendChild(slot);
+}
 
-    if (color) {
-      const token = document.createElement('div');
-      token.classList.add('token', color);
-      token.setAttribute('draggable', 'true');
-      bindTokenDragEvents(token, true);
-      slot.appendChild(token);
-    }
+trashBin.addEventListener('dragover', function(event) {
+  event.preventDefault();
+  event.dataTransfer.dropEffect = 'move';
+});
 
-    supplyGrid.appendChild(slot);
-  });
-
-  // ==========================================================================
-  // TRASH BIN — INITIALIZATION
-  // ==========================================================================
-
-  trashBin.addEventListener('dragover', (event) => {
-    event.preventDefault();
-    event.dataTransfer.dropEffect = 'move';
-  });
-
-  trashBin.addEventListener('drop', (event) => {
-    event.preventDefault();
-    if (!draggedToken || isSupplyToken) return;
-
-    const oldX       = parseInt(draggedToken.parentElement.dataset.x);
-    const oldY       = parseInt(draggedToken.parentElement.dataset.y);
+trashBin.addEventListener('drop', function(event) {
+  event.preventDefault();
+  if (draggedToken && !isSupplyToken) {
+    const oldX = parseInt(draggedToken.parentElement.dataset.x);
+    const oldY = parseInt(draggedToken.parentElement.dataset.y);
     const tokenIndex = Array.from(draggedToken.parentElement.children).indexOf(draggedToken);
+
     draggedToken.remove();
-
-    sendNetworkData({ isDelete: true, oldX, oldY, tokenIndex, senderRole: myRole });
-  });
-
-  // ==========================================================================
-  // COPY LINK — INITIALIZATION
-  // ==========================================================================
-
-  if (copyBtn) {
-    copyBtn.addEventListener('click', async () => {
-      const url = window.location.href;
-
-      try {
-        // Prefer the modern async clipboard API
-        await navigator.clipboard.writeText(url);
-      } catch {
-        // Fallback for browsers that block clipboard access
-        try {
-          const input = Object.assign(document.createElement('input'), {
-            value: url,
-            style: 'position:absolute;left:-9999px',
-          });
-          document.body.appendChild(input);
-          input.select();
-          input.setSelectionRange(0, 99999);
-          document.execCommand('copy');
-          document.body.removeChild(input);
-        } catch (fallbackErr) {
-          console.error('Copy failed:', fallbackErr);
-          statusText.innerText = '⚠️ Copy blocked — paste from the address bar.';
-          return;
-        }
-      }
-
-      const previousText = statusText.innerText;
-      statusText.innerText = '📋 Link copied!';
-      setTimeout(() => { statusText.innerText = previousText; }, 3000);
-    });
+    
+    // Transmit deletion request to peer
+    sendNetworkData({ isDelete: true, oldX: oldX, oldY: oldY, tokenIndex: tokenIndex });
   }
-
 });
