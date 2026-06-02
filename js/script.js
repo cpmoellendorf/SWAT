@@ -34,19 +34,20 @@ window.addEventListener('load', function() {
     connection.on('open', () => {
       setupConnectionListeners();
       statusText.innerText = "🟢 Connected to Host! Game Live.";
+      
+      // GUEST LIVE: Transform the guest's hidden copy link button into a "Start New Game" button
+      transformToStartNewGameButton();
     });
   }
 
-  // Helper helper to swap the Copy Link button with a Start New Game button for Host
+  // Shared Helper to swap the button text and redirect link for whichever client is live
   function transformToStartNewGameButton() {
     if (copyBtn) {
       copyBtn.innerText = "🔄 Start New Game";
-      // Change behavior to redirect to the original deployed baseline
       copyBtn.onclick = function() {
         window.location.href = "https://cpmoellendorf.github.io/SWAT/";
       };
-      // Ensure it remains perfectly visible
-      copyBtn.style.display = 'inline-block';
+      copyBtn.style.display = 'inline-block'; // Explicitly show it on both sides
     }
   }
 
@@ -68,7 +69,7 @@ window.addEventListener('load', function() {
           if (header) header.innerText = "ATTACK";
         }
         
-        // Remove copy link button completely for the attacker
+        // Hide it initially while connecting, it will pop back up as 'Start New Game' on open
         if (copyBtn) {
           copyBtn.style.display = 'none';
         }
@@ -82,7 +83,7 @@ window.addEventListener('load', function() {
       setupConnectionListeners();
       statusText.innerText = "🟢 Player 2 Connected! Game Live.";
       
-      // GUEST CONNECTED: Transform Host button into "Start New Game" button
+      // HOST LIVE: Transform Host button into "Start New Game" button
       transformToStartNewGameButton();
     });
 
@@ -103,7 +104,7 @@ window.addEventListener('load', function() {
   }
 
   // ==========================================================================
-  // SHARE LINK (Initial Baseline)
+  // SHARE LINK (Initial Baseline Setup for Host Only)
   // ==========================================================================
   if (copyBtn) {
     copyBtn.onclick = function() {
