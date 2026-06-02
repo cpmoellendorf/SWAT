@@ -316,13 +316,16 @@ window.addEventListener('load', function() {
   }
 
   // ==========================================================================
-  // INTERACTIVE TACTICAL GUIDE SHEET (Action Bar Click Listeners)
+  // ROBUST DELEGATED INTERACTIVE TACTICAL GUIDE SHEET
   // ==========================================================================
-  const actionBars = document.querySelectorAll('.action-bar');
-  actionBars.forEach(bar => {
-    bar.addEventListener('click', function() {
-      this.classList.toggle('muted');
+  if (guideCard) {
+    guideCard.addEventListener('click', function(event) {
+      // Find nearest action bar element clicked inside the guide container
+      const bar = event.target.closest('.action-bar');
+      if (bar) {
+        bar.classList.toggle('muted');
+      }
     });
-  });
+  }
 
 });
