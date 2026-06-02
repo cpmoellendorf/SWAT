@@ -178,7 +178,7 @@ body {
   box-sizing: border-box;
   max-width: 40px;
   max-height: 38.18px;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .cell:hover {
@@ -200,15 +200,15 @@ body {
 }
 
 /* ==========================================================================
-   WALLS (Universal Grid Compatibility)
+   WALLS (Border / Grid Gap Seated)
    ========================================================================== */
 .cell[data-wall-right="true"]::after {
   content: "";
   position: absolute;
-  top: 0;
-  right: 0;                /* Pulled from -2px to 0 so it stays inside cell bounds */
-  width: 4px;              /* Slightly thickened to ensure high visibility over gaps */
-  height: 100%;
+  top: -2px;               /* Reaches up into the corner grid intersection */
+  right: -2px;             /* Shifts right, perfectly centering over the 2px gap */
+  width: 2px;              /* Fills the grid line width perfectly */
+  height: calc(100% + 4px);/* Spans full cell height plus top & bottom gaps for seamless corners */
   background-color: #000000;
   z-index: 10;
 }
@@ -216,36 +216,36 @@ body {
 .cell[data-wall-bottom="true"]::before {
   content: "";
   position: absolute;
-  left: 0;
-  bottom: 0;               /* Pulled from -2px to 0 so it stays inside cell bounds */
-  height: 4px;             /* Slightly thickened to ensure high visibility over gaps */
-  width: 100%;
+  left: -2px;              /* Reaches left into the corner grid intersection */
+  bottom: -2px;            /* Shifts down, perfectly centering over the 2px gap */
+  height: 2px;             /* Fills the grid line width perfectly */
+  width: calc(100% + 4px); /* Spans full cell width plus left & right gaps for seamless corners */
   background-color: #000000;
   z-index: 10;
 }
 
 /* ==========================================================================
-   WINDOWS (Universal Grid Compatibility)
+   WINDOWS (Border / Grid Gap Seated)
    ========================================================================== */
 .cell[data-window-right="true"]::after {
   content: "";
   position: absolute;
-  top: 0;
-  right: 0;                /* Pulled inside cell bounds */
-  width: 4px;
-  height: 100%;
-  border-right: 4px dashed #8B4513;
+  top: -2px;
+  right: -2px;
+  width: 2px;
+  height: calc(100% + 4px);
+  border-right: 2px dashed #8B4513;
   z-index: 15;
 }
 
 .cell[data-window-bottom="true"]::before {
   content: "";
   position: absolute;
-  left: 0;
-  bottom: 0;               /* Pulled inside cell bounds */
-  height: 4px;
-  width: 100%;
-  border-bottom: 4px dashed #8B4513;
+  left: -2px;
+  bottom: -2px;
+  height: 2px;
+  width: calc(100% + 4px);
+  border-bottom: 2px dashed #8B4513;
   z-index: 15;
 }
 
