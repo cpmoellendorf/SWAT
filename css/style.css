@@ -10,22 +10,19 @@ body {
 }
 
 /* ==========================================================================
-   DYNAMIC MINI-MAP (Shared Board)
+   DYNAMIC MINI-MAP (Updated for Document Flow)
    ========================================================================== */
 #mini-map-container {
-  position: absolute;
-  top: 15px;
-  left: 15px;
   background-color: #222222;
   padding: 8px;
   border-radius: 6px;
   border: 1px solid #444444;
   box-shadow: 0 4px 10px rgba(0,0,0,0.5);
-  z-index: 100;
   display: flex;
   flex-direction: column;
-  width: clamp(200px, 20vw, 340px);
+  width: 260px;
   height: auto;
+  margin-bottom: 20px;
 }
 
 #mini-map-title {
@@ -43,8 +40,8 @@ body {
   grid-template-rows: repeat(11, 1fr);
   width: 100%;
   aspect-ratio: 15 / 11;
-  gap: 1px;
-  background-color: #cccccc;
+  gap: 2px;
+  background-color: #f6f6f6;
 }
 
 #mini-map .cell {
@@ -59,9 +56,7 @@ body {
   gap: 1px;
   padding: 1px;
   box-sizing: border-box;
-  max-width: none;
-  max-height: none;
-  overflow: hidden;
+  overflow: visible;
 }
 
 #mini-map .cell:hover {
@@ -150,336 +145,50 @@ body {
   height: 100%;
 }
 
-/* ==========================================================================
-   WALLS (Border / Grid Gap Seated)
-   ========================================================================== */
-.cell[data-wall-right="true"]::after {
-  content: "";
-  position: absolute;
-  top: -2px;               
-  right: -2px;             
-  width: 2px;              
-  height: calc(100% + 4px);
-  background-color: #000000;
-  z-index: 10;
-  pointer-events: none;
-}
+/* WALLS/WINDOWS */
+.cell[data-wall-right="true"]::after { content: ""; position: absolute; top: -2px; right: -2px; width: 2px; height: calc(100% + 4px); background-color: #000000; z-index: 10; pointer-events: none; }
+.cell[data-wall-bottom="true"]::before { content: ""; position: absolute; left: -2px; bottom: -2px; height: 2px; width: calc(100% + 4px); background-color: #000000; z-index: 10; pointer-events: none; }
+.cell[data-window-right="true"]::after { content: ""; position: absolute; top: -2px; right: -2px; width: 2px; height: calc(100% + 4px); border-right: 2px dashed #8B4513; z-index: 15; pointer-events: none; }
+.cell[data-window-bottom="true"]::before { content: ""; position: absolute; left: -2px; bottom: -2px; height: 2px; width: calc(100% + 4px); border-bottom: 2px dashed #8B4513; z-index: 15; pointer-events: none; }
 
-.cell[data-wall-bottom="true"]::before {
-  content: "";
-  position: absolute;
-  left: -2px;              
-  bottom: -2px;            
-  height: 2px;             
-  width: calc(100% + 4px); 
-  background-color: #000000;
-  z-index: 10;
-  pointer-events: none;
-}
-
-/* ==========================================================================
-   WINDOWS (Border / Grid Gap Seated)
-   ========================================================================== */
-.cell[data-window-right="true"]::after {
-  content: "";
-  position: absolute;
-  top: -2px;
-  right: -2px;
-  width: 2px;
-  height: calc(100% + 4px);
-  border-right: 2px dashed #8B4513;
-  z-index: 15;
-  pointer-events: none;
-}
-
-.cell[data-window-bottom="true"]::before {
-  content: "";
-  position: absolute;
-  left: -2px;
-  bottom: -2px;
-  height: 2px;
-  width: calc(100% + 4px);
-  border-bottom: 2px dashed #8B4513;
-  z-index: 15;
-  pointer-events: none;
-}
-
-/* ==========================================================================
-   TOKENS
-   ========================================================================== */
-.token {
-  border-radius: 50%;
-  background-color: #1b4d18; 
-  z-index: 5;
-  user-select: none;
-  cursor: grab;
-  flex-grow: 0;
-  flex-shrink: 1;
-  flex-basis: 26px;
-  width: 26px;
-  height: 26px;
-  max-width: 26px;
-  max-height: 26px;
-  
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-family: sans-serif;
-  font-weight: bold;
-  font-size: 11px;
-  color: #ffffff;
-}
-
-.cell:has(.token:nth-child(2)) .token {
-  flex-basis: 16px;
-  width: 16px;
-  height: 16px;
-  max-width: 16px;
-  max-height: 16px;
-  font-size: 8px;
-}
-
-.cell:has(.token:nth-child(3)) .token {
-  flex-basis: 11px;
-  width: 11px;
-  height: 11px;
-  max-width: 11px;
-  max-height: 11px;
-  font-size: 0px; 
-}
-
-/* Token Colors */
+/* TOKENS */
+.token { border-radius: 50%; background-color: #1b4d18; z-index: 5; user-select: none; cursor: grab; flex-grow: 0; flex-shrink: 1; flex-basis: 26px; width: 26px; height: 26px; max-width: 26px; max-height: 26px; display: inline-flex; align-items: center; justify-content: center; font-family: sans-serif; font-weight: bold; font-size: 11px; color: #ffffff; }
+.token:active { cursor: grabbing; }
+.token.dragging { opacity: 0.4; }
 .token.light-blue  { background-color: #00b4d8; color: #1a1a1a; }
 .token.dark-blue   { background-color: #070bce; color: #ffffff; }
 .token.orange      { background-color: #f77f00; color: #ffffff; }
 .token.red         { background-color: #d90429; color: #ffffff; }
 .token.dark-green  { background-color: #1b4d18; color: #ffffff; }
-
-/* Custom Specialty Label Tokens */
 .token.black       { background-color: #000000; color: #ffffff; }
 .token.grey        { background-color: #666666; color: #ffffff; }
 .token.light-green { background-color: #70e000; color: #1a1a1a; }
 
-.token.light-green,
-.token.grey {
-  font-size: 7px;
-}
+/* LAYOUT */
+.main-game-layout { display: flex; flex-direction: row; align-items: flex-start; gap: 40px; margin-top: 20px; flex-wrap: nowrap; }
+.guide-sidebar-wrapper { display: flex; flex-direction: column; height: auto; gap: 20px; }
+.sidebar-panel { display: flex; flex-direction: column; align-items: center; font-family: sans-serif; }
 
-.cell:has(.token:nth-child(2)) .token.light-green,
-.cell:has(.token:nth-child(2)) .token.grey {
-  font-size: 5px;
-}
+/* SUPPLY DEPOT */
+#supply-grid { display: grid; grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(5, 1fr); width: 100px; height: 250px; gap: 2px; background-color: #333333; }
+.supply-slot { background-color: #222222; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; }
+#trash-bin { margin-top: 30px; width: 100px; height: 50px; background-color: #9b2226; color: #ffffff; font-weight: bold; display: flex; align-items: center; justify-content: center; border-radius: 4px; cursor: pointer; border: 2px solid #ae2012; }
 
-.token:active   { cursor: grabbing; }
-.token.dragging { opacity: 0.4; }
+/* GUIDE CARD */
+.guide-panel { width: 260px; height: 275px; background-color: #222222; border-radius: 6px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.5); display: flex; flex-direction: column; }
+.guide-header { background-color: #00b4d8; color: #1a1a1a; font-weight: bold; text-align: center; padding: 12px; font-size: 1.1rem; letter-spacing: 2px; }
+.guide-body { display: flex; flex-direction: row; height: 100%; padding: 15px 10px; gap: 10px; }
+.guide-column.left-info { flex: 1.2; }
+.guide-column.right-bars { flex: 1; display: flex; flex-direction: column; justify-content: flex-start; gap: 6px; padding-top: 4px; }
+.action-bar { height: 22px; border-radius: 4px; display: none; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: bold; cursor: pointer; }
 
-/* ==========================================================================
-   LAYOUT
-   ========================================================================== */
-.main-game-layout {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 40px;
-  margin-top: 20px;
-}
+/* ROLE CONDITIONAL VISIBILITY */
+.guide-panel .d-light, .guide-panel .d-dark { display: flex; background-color: #00b4d8; }
+.guide-panel .d-dark { background-color: #070bce; }
+.guide-panel .a-red, .guide-panel .a-orange { display: none; background-color: #d90429; }
+.guide-panel .a-orange { background-color: #f77f00; }
 
-.guide-sidebar-wrapper {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
+.guide-panel.attack .d-light, .guide-panel.attack .d-dark { display: none; }
+.guide-panel.attack .a-red, .guide-panel.attack .a-orange { display: flex; }
 
-.sidebar-panel {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  font-family: sans-serif;
-}
-
-/* ==========================================================================
-   SUPPLY DEPOT (Updated to a clean 3x3 Grid Layout)
-   ========================================================================== */
-#supply-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  grid-template-rows: repeat(3, 1fr);
-  width: 120px;
-  height: 120px;
-  gap: 2px;
-  background-color: #333333;
-}
-
-.supply-slot {
-  background-color: #222222;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  height: 100%;
-}
-
-#trash-bin {
-  margin-top: 30px;
-  width: 100px;
-  height: 50px;
-  background-color: #9b2226;
-  color: #ffffff;
-  font-weight: bold;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 4px;
-  cursor: pointer;
-  border: 2px solid #ae2012;
-  user-select: none;
-}
-
-#trash-bin:hover {
-  background-color: #ae2012;
-}
-
-/* ==========================================================================
-   GUIDE CARD (Tactical Cheat Sheet)
-   ========================================================================== */
-.guide-panel {
-  width: 260px;
-  height: 275px; 
-  background-color: #222222;
-  border-radius: 6px;
-  overflow: hidden;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.5);
-  display: flex;
-  flex-direction: column;
-}
-
-.guide-header {
-  background-color: #00b4d8;
-  color: #1a1a1a;
-  font-weight: bold;
-  text-align: center;
-  padding: 12px;
-  font-size: 1.1rem;
-  letter-spacing: 2px;
-}
-
-.guide-body {
-  display: flex;
-  flex-direction: row;
-  height: 100%;
-  padding: 15px 10px;
-  gap: 10px;
-}
-
-.guide-column {
-  display: flex;
-  flex-direction: column;
-}
-
-.guide-column.left-info {
-  flex: 1.2;
-}
-
-.guide-column.left-info ul {
-  list-style-type: none;
-  padding: 0;
-  margin: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-.guide-column.left-info li {
-  color: #e0e0e0;
-  font-size: 0.85rem;
-  line-height: 1.3;
-}
-
-.guide-column.left-info strong {
-  color: #00b4d8;
-  display: block;
-}
-
-.guide-column.right-bars {
-  flex: 1;
-  justify-content: flex-start;
-  gap: 6px;
-  padding-top: 4px;
-}
-
-.bars-header {
-  color: #00b4d8;
-  font-weight: bold;
-  font-size: 0.8rem;
-  letter-spacing: 1px;
-  text-align: center;
-  margin-bottom: 2px;
-  border-bottom: 1px solid #333333;
-  padding-bottom: 4px;
-}
-
-.action-bar {
-  height: 22px;
-  border-radius: 4px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.7rem;
-  font-weight: bold;
-  cursor: pointer;
-  transition: background-color 0.15s ease, filter 0.15s ease;
-}
-
-/* Action Bar Colors */
-.action-bar.d-light { background-color: #00b4d8; }
-.action-bar.d-dark  { background-color: #070bce; }
-.action-bar.a-red   { background-color: #d90429; }
-.action-bar.a-orange{ background-color: #f77f00; }
-
-/* Muted state modifier */
-.action-bar.muted {
-  filter: grayscale(100%) brightness(35%) !important;
-  border: 1px dashed #555555 !important;
-  box-sizing: border-box;
-}
-
-/* ==========================================================================
-   ROLE CONDITIONAL VISIBILITY (Improved)
-   ========================================================================== */
-
-/* Hide all action bars by default */
-.guide-panel .a-red,
-.guide-panel .a-orange,
-.guide-panel .d-light,
-.guide-panel .d-dark {
-  display: none;
-}
-
-/* Default: Show Defense Bars */
-.guide-panel .d-light,
-.guide-panel .d-dark {
-  display: flex; /* Changed from block to flex to maintain alignment */
-}
-
-/* Attack State: Show Attack Bars */
-.guide-panel.attack .d-light,
-.guide-panel.attack .d-dark {
-  display: none;
-}
-.guide-panel.attack .a-red,
-.guide-panel.attack .a-orange {
-  display: flex; /* Changed from block to flex */
-}
-
-/* ==========================================================================
-   GUIDE CARD — ATTACK VARIANT STATE MUTATIONS
-   ========================================================================== */
-.guide-panel.attack .guide-header {
-  background-color: #f77f00;
-  color: #ffffff;
-}
-
-.guide-panel.attack .guide-column.left-info strong,
-.guide-panel.attack .bars-header {
-  color: #f77f00;
-}
+.guide-panel.attack .guide-header { background-color: #f77f00; color: #ffffff; }
