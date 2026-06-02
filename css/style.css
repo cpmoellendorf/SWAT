@@ -10,12 +10,10 @@ body {
 }
 
 /* ==========================================================================
-   DYNAMIC MINI-MAP (Shared Board)
+   DYNAMIC MINI-MAP (Shared Board Layout Cleaned)
    ========================================================================== */
 #mini-map-container {
-  position: absolute;
-  top: 15px;
-  left: 15px;
+  /* REMOVED: position: absolute, top: 15px, left: 15px */
   background-color: #222222;
   padding: 8px;
   border-radius: 6px;
@@ -24,8 +22,31 @@ body {
   z-index: 100;
   display: flex;
   flex-direction: column;
-  width: clamp(200px, 20vw, 340px);
-  height: auto;
+  
+  /* Match the width cleanly with the 260px Guide Panel below it */
+  width: 260px; 
+  box-sizing: border-box;
+}
+
+/* ==========================================================================
+   LAYOUT ADJUSTMENTS
+   ========================================================================== */
+.main-game-layout {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start; /* Align elements to the top of the row row */
+  gap: 40px;
+  margin-top: 20px;
+  flex-wrap: nowrap;
+}
+
+.guide-sidebar-wrapper {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  /* CHANGED: Removed the restrictive 480px fixed height to prevent overflow/clipping */
+  gap: 20px; /* Space out the Mini-Map from the Guide Panel */
 }
 
 #mini-map-title {
