@@ -18,7 +18,7 @@ body {
 
 /* ==========================================================================
    MINI-MAP (Shared Board)
-   ========================================================================== */
+   ========================================================================= */
 #mini-map-container {
   position: absolute;
   top: 15px;
@@ -319,7 +319,7 @@ body {
 
 .guide-panel {
   width: 260px;
-  height: 240px;
+  height: 260px; /* Expanded slightly to accommodate 6 bars comfortably */
   background-color: #222222;
   border-radius: 6px;
   overflow: hidden;
@@ -377,7 +377,7 @@ body {
 
 .guide-column.right-bars {
   justify-content: flex-start;
-  gap: 14px;
+  gap: 8px; /* Tighter gaps to bundle 6 items cleanly */
   padding-top: 4px;
 }
 
@@ -387,30 +387,40 @@ body {
   font-size: 0.8rem;
   letter-spacing: 1px;
   text-align: center;
-  margin-bottom: -5px;
+  margin-bottom: -2px;
   border-bottom: 1px solid #333333;
   padding-bottom: 4px;
 }
 
 .action-bar {
-  height: 24px;
+  height: 20px; /* Reduced layout footprint for structural stability */
   border-radius: 4px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.75rem;
+  font-size: 0.65rem;
   font-weight: bold;
 }
 
-.action-bar.light {
+/* Defense Color Configurations */
+.action-bar.light-blue-bar {
   background-color: #00b4d8;
   opacity: 0.6;
 }
 
-.action-bar.dark {
+.action-bar.dark-blue-bar {
   background-color: #070bce;
   color: #ffffff;
   letter-spacing: 1px;
+}
+
+/* Attack Color Configurations */
+.action-bar.red-bar {
+  background-color: #d90429;
+}
+
+.action-bar.orange-bar {
+  background-color: #f77f00;
 }
 
 /* ==========================================================================
@@ -427,12 +437,14 @@ body {
   color: #f77f00;
 }
 
-.guide-panel.attack .action-bar.light {
-  background-color: #f77f00;
-  opacity: 0.6;
+/* Handle Attack Role Variant Component Toggle States */
+.guide-panel.attack .light-blue-bar, 
+.guide-panel.attack .dark-blue-bar {
+  display: none;
 }
 
-.guide-panel.attack .action-bar.dark {
+.guide-panel:not(.attack) .red-bar,
+.guide-panel:not(.attack) .orange-bar {
   display: none;
 }
     </style>
@@ -467,10 +479,20 @@ body {
                     </div>
                     <div class="guide-column right-bars">
                         <div class="bars-header">ACTIONS</div>
-                        <div class="action-bar light"></div>
-                        <div class="action-bar light"></div>
-                        <div class="action-bar light"></div>
-                        <div class="action-bar dark">SCAN ONLY</div>
+                        
+                        <div class="action-bar light-blue-bar"></div>
+                        <div class="action-bar light-blue-bar"></div>
+                        <div class="action-bar light-blue-bar"></div>
+                        <div class="action-bar dark-blue-bar">SCAN ONLY</div>
+                        <div class="action-bar dark-blue-bar">SCAN ONLY</div>
+                        <div class="action-bar dark-blue-bar">SCAN ONLY</div>
+
+                        <div class="action-bar red-bar"></div>
+                        <div class="action-bar red-bar"></div>
+                        <div class="action-bar red-bar"></div>
+                        <div class="action-bar orange-bar"></div>
+                        <div class="action-bar orange-bar"></div>
+                        <div class="action-bar orange-bar"></div>
                     </div>
                 </div>
             </div>
@@ -512,7 +534,7 @@ window.addEventListener('load', function() {
   const guideCard = document.querySelector('.guide-panel');
 
   // ==========================================================================
-  // PEER-TO-PEER MULTIPLAYER ENGINE (With Auto-Retry)
+  // PEER-TO-P2P MULTIPLAYER ENGINE (With Auto-Retry)
   // ==========================================================================
   let retryCount = 0;
   const maxRetries = 5;
