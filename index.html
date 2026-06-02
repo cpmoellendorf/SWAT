@@ -13,6 +13,7 @@ body {
   flex-direction: column;
   align-items: center;
   padding: 20px;
+  margin: 0;
 }
 
 /* ==========================================================================
@@ -28,6 +29,7 @@ body {
   border: 1px solid #444444;
   box-shadow: 0 4px 10px rgba(0,0,0,0.5);
   z-index: 100;
+  display: block; /* Explicitly visible for both players */
 }
 
 #mini-map-title {
@@ -578,7 +580,7 @@ window.addEventListener('load', function() {
   });
 
   // ==========================================================================
-  // NETWORK RECEIVER
+  // NETWORK RECEIVER & SYNC ENGINE
   // ==========================================================================
   function sendNetworkData(payload) {
     if (connection && connection.open) {
@@ -597,6 +599,7 @@ window.addEventListener('load', function() {
         if (!targetCell) return;
 
         if (data.isNew) {
+          // Re-create the dragged token visually on opponent side mini-map
           const remoteToken = document.createElement('div');
           remoteToken.className = `token ${data.color}`;
           remoteToken.setAttribute('draggable', 'true');
@@ -610,17 +613,16 @@ window.addEventListener('load', function() {
         } else {
           const oldCell = miniMap.querySelector(`.cell[data-x="${data.oldX}"][data-y="${data.oldY}"]`);
           if (oldCell) {
-            // Find a token of the right color to shift coordinates
             const tokenToMove = Array.from(oldCell.children).find(child => child.classList.contains(data.color || 'token'));
             if (tokenToMove) {
               targetCell.appendChild(tokenToMove);
             }
           }
         }
-        return; // End Mini-Map sync routing
+        return; // End Mini-Map update parsing
       }
 
-      // Default Blind Radar Alert logic for main maps
+      // Default Radar Alerts for individual hidden maps
       if (data.isNew) {
         console.log(`📡 RADAR ALERT: Opponent instantiated a token on THEIR board at ${opponentLetter}${opponentNumber}.`);
       } else if (data.isDelete) {
@@ -670,7 +672,7 @@ window.addEventListener('load', function() {
       const isWallOrWindow = cell.matches('[data-wall-right="true"], [data-wall-bottom="true"], [data-window-right="true"], [data-window-bottom="true"]');
       if (isWallOrWindow) return;
 
-      // Ensure tokens dragged from main map don't drop on mini-map, and vice-versa
+      // Restrict cross-board dragging (Mini-map tokens stay on mini-map, Main stays on main)
       const sourceIsMiniMap = !!draggedToken.parentElement.closest('#mini-map');
       if (!isSupplyToken && (sourceIsMiniMap !== isMiniMapBoard)) return;
 
@@ -708,13 +710,12 @@ window.addEventListener('load', function() {
   }
 
   // ==========================================================================
-  // GRID GENERATORS (Main Map & Shared Mini-Map)
+  // GRID GENERATORS (Simultaneous Twin Build)
   // ==========================================================================
   for (let i = 0; i < totalCells; i++) {
     const col = i % columns;
     const row = Math.floor(i / columns);
 
-    // Render elements for both boards side-by-side
     let labelText = '';
     if (row === 0 && col !== 0) labelText = letters[col - 1];
     if (col === 0 && row !== 0) labelText = row;
@@ -731,7 +732,7 @@ window.addEventListener('load', function() {
       miniCellOrLabel.dataset.x = gameX;
       miniCellOrLabel.dataset.y = gameY;
 
-      // Map design presets (synced layout styling parameters)
+      // Sync map environmental design structures 
       if (gameX === 0 && gameY === 0) {
         mainCellOrLabel.setAttribute('data-wall-right', 'true');
         miniCellOrLabel.setAttribute('data-wall-right', 'true');
