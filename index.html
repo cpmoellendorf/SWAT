@@ -18,7 +18,7 @@ body {
 
 /* ==========================================================================
    MINI-MAP (Shared Board)
-   ========================================================================= */
+   ========================================================================== */
 #mini-map-container {
   position: absolute;
   top: 15px;
@@ -29,7 +29,7 @@ body {
   border: 1px solid #444444;
   box-shadow: 0 4px 10px rgba(0,0,0,0.5);
   z-index: 100;
-  display: block; /* Explicitly visible for both players */
+  display: block;
 }
 
 #mini-map-title {
@@ -74,7 +74,6 @@ body {
   max-height: 10px;
 }
 
-/* Keep mini-map token scaling balanced */
 #mini-map .cell:has(.token:nth-child(2)) .token {
   flex-basis: 6px;
   width: 6px;
@@ -86,7 +85,6 @@ body {
 /* ==========================================================================
    GAME BOARD
    ========================================================================== */
-
 #game-board {
   display: grid;
   grid-template-columns: repeat(16, 1fr);
@@ -104,8 +102,6 @@ body {
   height: 100%;
   cursor: pointer;
   position: relative;
-
-  /* Flex layout for stacked tokens */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -113,8 +109,6 @@ body {
   gap: 1px;
   padding: 1px;
   box-sizing: border-box;
-
-  /* Prevent cells from growing or resizing */
   max-width: 38.125px;
   max-height: 38.18px;
   overflow: hidden;
@@ -124,7 +118,6 @@ body {
   background-color: #e0e0e0;
 }
 
-/* Static tracking edge labels (A–O and 1–10) */
 .label {
   background-color: #222222;
   color: #ffffff;
@@ -140,9 +133,8 @@ body {
 }
 
 /* ==========================================================================
-   WALLS (Solid black lines drawn into the 2px grid gaps)
+   WALLS
    ========================================================================== */
-
 .cell[data-wall-right="true"]::after {
   content: "";
   position: absolute;
@@ -166,9 +158,8 @@ body {
 }
 
 /* ==========================================================================
-   WINDOWS (Brown dashed lines drawn into the 2px grid gaps)
+   WINDOWS
    ========================================================================== */
-
 .cell[data-window-right="true"]::after {
   content: "";
   position: absolute;
@@ -194,14 +185,12 @@ body {
 /* ==========================================================================
    TOKENS
    ========================================================================== */
-
 .token {
   border-radius: 50%;
   background-color: #21781e;
   z-index: 5;
   user-select: none;
   cursor: grab;
-
   flex-grow: 0;
   flex-shrink: 1;
   flex-basis: 26px;
@@ -211,7 +200,6 @@ body {
   max-height: 26px;
 }
 
-/* Two tokens in a cell: shrink to 16px */
 .cell:has(.token:nth-child(2)) .token {
   flex-basis: 16px;
   width: 16px;
@@ -220,7 +208,6 @@ body {
   max-height: 16px;
 }
 
-/* Three or more tokens in a cell: shrink to 11px */
 .cell:has(.token:nth-child(3)) .token {
   flex-basis: 11px;
   width: 11px;
@@ -229,24 +216,20 @@ body {
   max-height: 11px;
 }
 
-/* Prevent child elements from intercepting drag events */
 .token * { pointer-events: none; }
 .token   { pointer-events: auto; }
 
-/* Player color variants */
 .token.light-blue { background-color: #00b4d8; }
 .token.dark-blue  { background-color: #070bce; }
 .token.pink       { background-color: #ff85a1; }
 .token.red        { background-color: #d90429; }
 
-/* Drag states */
 .token:active   { cursor: grabbing; }
 .token.dragging { opacity: 0.4; }
 
 /* ==========================================================================
    LAYOUT
    ========================================================================== */
-
 .main-game-layout {
   display: flex;
   flex-direction: row;
@@ -273,7 +256,6 @@ body {
 /* ==========================================================================
    SUPPLY DEPOT
    ========================================================================== */
-
 #supply-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -316,10 +298,9 @@ body {
 /* ==========================================================================
    GUIDE CARD (Tactical Cheat Sheet)
    ========================================================================== */
-
 .guide-panel {
   width: 260px;
-  height: 260px; /* Expanded slightly to accommodate 6 bars comfortably */
+  height: 275px; /* Boosted height to cleanly scale 6 interactive bars */
   background-color: #222222;
   border-radius: 6px;
   overflow: hidden;
@@ -377,7 +358,7 @@ body {
 
 .guide-column.right-bars {
   justify-content: flex-start;
-  gap: 8px; /* Tighter gaps to bundle 6 items cleanly */
+  gap: 6px; /* Snug tracking fit */
   padding-top: 4px;
 }
 
@@ -387,46 +368,41 @@ body {
   font-size: 0.8rem;
   letter-spacing: 1px;
   text-align: center;
-  margin-bottom: -2px;
+  margin-bottom: 2px;
   border-bottom: 1px solid #333333;
   padding-bottom: 4px;
 }
 
 .action-bar {
-  height: 20px; /* Reduced layout footprint for structural stability */
+  height: 22px;
   border-radius: 4px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.65rem;
+  font-size: 0.7rem;
   font-weight: bold;
 }
 
-/* Defense Color Configurations */
-.action-bar.light-blue-bar {
-  background-color: #00b4d8;
-  opacity: 0.6;
+/* Role Specific Coloring Modules */
+.action-bar.d-light { background-color: #00b4d8; opacity: 0.6; color: #1a1a1a; }
+.action-bar.d-dark  { background-color: #070bce; color: #ffffff; letter-spacing: 1px; }
+.action-bar.a-red   { background-color: #d90429; color: #ffffff; }
+.action-bar.a-orange{ background-color: #f77f00; color: #ffffff; }
+
+/* Dynamic visibility architecture controlled via parent class toggle scripts */
+.guide-panel.attack .d-light,
+.guide-panel.attack .d-dark {
+  display: none !important;
 }
 
-.action-bar.dark-blue-bar {
-  background-color: #070bce;
-  color: #ffffff;
-  letter-spacing: 1px;
-}
-
-/* Attack Color Configurations */
-.action-bar.red-bar {
-  background-color: #d90429;
-}
-
-.action-bar.orange-bar {
-  background-color: #f77f00;
+.guide-panel:not(.attack) .a-red,
+.guide-panel:not(.attack) .a-orange {
+  display: none !important;
 }
 
 /* ==========================================================================
-   GUIDE CARD — ATTACK VARIANT
+   GUIDE CARD — ATTACK VARIANT STATE MUTATIONS
    ========================================================================== */
-
 .guide-panel.attack .guide-header {
   background-color: #f77f00;
   color: #ffffff;
@@ -435,17 +411,6 @@ body {
 .guide-panel.attack .guide-column.left-info strong,
 .guide-panel.attack .bars-header {
   color: #f77f00;
-}
-
-/* Handle Attack Role Variant Component Toggle States */
-.guide-panel.attack .light-blue-bar, 
-.guide-panel.attack .dark-blue-bar {
-  display: none;
-}
-
-.guide-panel:not(.attack) .red-bar,
-.guide-panel:not(.attack) .orange-bar {
-  display: none;
 }
     </style>
 </head>
@@ -480,19 +445,19 @@ body {
                     <div class="guide-column right-bars">
                         <div class="bars-header">ACTIONS</div>
                         
-                        <div class="action-bar light-blue-bar"></div>
-                        <div class="action-bar light-blue-bar"></div>
-                        <div class="action-bar light-blue-bar"></div>
-                        <div class="action-bar dark-blue-bar">SCAN ONLY</div>
-                        <div class="action-bar dark-blue-bar">SCAN ONLY</div>
-                        <div class="action-bar dark-blue-bar">SCAN ONLY</div>
+                        <div class="action-bar d-light"></div>
+                        <div class="action-bar d-light"></div>
+                        <div class="action-bar d-light"></div>
+                        <div class="action-bar d-dark">SCAN ONLY</div>
+                        <div class="action-bar d-dark">SCAN ONLY</div>
+                        <div class="action-bar d-dark">SCAN ONLY</div>
 
-                        <div class="action-bar red-bar"></div>
-                        <div class="action-bar red-bar"></div>
-                        <div class="action-bar red-bar"></div>
-                        <div class="action-bar orange-bar"></div>
-                        <div class="action-bar orange-bar"></div>
-                        <div class="action-bar orange-bar"></div>
+                        <div class="action-bar a-red"></div>
+                        <div class="action-bar a-red"></div>
+                        <div class="action-bar a-red"></div>
+                        <div class="action-bar a-orange"></div>
+                        <div class="action-bar a-orange"></div>
+                        <div class="action-bar a-orange"></div>
                     </div>
                 </div>
             </div>
@@ -534,7 +499,7 @@ window.addEventListener('load', function() {
   const guideCard = document.querySelector('.guide-panel');
 
   // ==========================================================================
-  // PEER-TO-P2P MULTIPLAYER ENGINE (With Auto-Retry)
+  // PEER-TO-PEER MULTIPLAYER ENGINE (With Auto-Retry)
   // ==========================================================================
   let retryCount = 0;
   const maxRetries = 5;
@@ -615,13 +580,11 @@ window.addEventListener('load', function() {
       const opponentLetter = letters[data.x];
       const opponentNumber = data.y + 1;
 
-      // Handle Mini-Map synchronization events
       if (data.isMiniMap) {
         const targetCell = miniMap.querySelector(`.cell[data-x="${data.x}"][data-y="${data.y}"]`);
         if (!targetCell) return;
 
         if (data.isNew) {
-          // Re-create the dragged token visually on opponent side mini-map
           const remoteToken = document.createElement('div');
           remoteToken.className = `token ${data.color}`;
           remoteToken.setAttribute('draggable', 'true');
@@ -641,10 +604,9 @@ window.addEventListener('load', function() {
             }
           }
         }
-        return; // End Mini-Map update parsing
+        return;
       }
 
-      // Default Radar Alerts for individual hidden maps
       if (data.isNew) {
         console.log(`📡 RADAR ALERT: Opponent instantiated a token on THEIR board at ${opponentLetter}${opponentNumber}.`);
       } else if (data.isDelete) {
@@ -694,7 +656,6 @@ window.addEventListener('load', function() {
       const isWallOrWindow = cell.matches('[data-wall-right="true"], [data-wall-bottom="true"], [data-window-right="true"], [data-window-bottom="true"]');
       if (isWallOrWindow) return;
 
-      // Restrict cross-board dragging (Mini-map tokens stay on mini-map, Main stays on main)
       const sourceIsMiniMap = !!draggedToken.parentElement.closest('#mini-map');
       if (!isSupplyToken && (sourceIsMiniMap !== isMiniMapBoard)) return;
 
@@ -754,7 +715,6 @@ window.addEventListener('load', function() {
       miniCellOrLabel.dataset.x = gameX;
       miniCellOrLabel.dataset.y = gameY;
 
-      // Sync map environmental design structures 
       if (gameX === 0 && gameY === 0) {
         mainCellOrLabel.setAttribute('data-wall-right', 'true');
         miniCellOrLabel.setAttribute('data-wall-right', 'true');
