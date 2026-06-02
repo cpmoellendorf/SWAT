@@ -3,10 +3,10 @@ window.addEventListener('load', function() {
   // ==========================================================================
   // GLOBALS
   // ==========================================================================
-  const letters = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N'];
+  const letters = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O'];
   const board = document.getElementById('game-board');
   const miniMap = document.getElementById('mini-map');
-  const columns = 15;
+  const columns = 16;
   const rows = 11;
   const totalCells = columns * rows;
 
