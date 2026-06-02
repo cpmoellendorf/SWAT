@@ -43,8 +43,8 @@ body {
   grid-template-rows: repeat(11, 1fr);
   width: 100%;
   aspect-ratio: 15 / 11;
-  gap: 2px;                   /* Matched to the main board's grid line thickness */
-  background-color: #f6f6f6;  /* Matched to the main board's light light grey background line color */
+  gap: 2px;                   /* 2px track gaps matching the main board line weight */
+  background-color: #f6f6f6;  /* Light grey line base matching the main board */
 }
 
 #mini-map .cell {
@@ -59,17 +59,17 @@ body {
   gap: 1px;
   padding: 1px;
   box-sizing: border-box;
-  overflow: hidden;
   max-width: none;
   max-height: none;
+  overflow: visible;         /* CHANGED from hidden to visible so borders render into gaps */
 }
 
 #mini-map .cell:hover {
-  background-color: #e0e0e0;  /* Matched to the main board cell hover color */
+  background-color: #e0e0e0;
 }
 
 #mini-map .label {
-  background-color: #222222;  /* Matched to the main board label color */
+  background-color: #222222;
   color: #ffffff;
   font-weight: bold;
   display: flex;
@@ -80,54 +80,6 @@ body {
   user-select: none;
   width: 100%;
   height: 100%;
-}
-
-/* ==========================================================================
-   MINI-MAP WALLS & WINDOWS COMPATIBILITY
-   (Ensures pseudo-elements render accurately inside the grid container)
-   ========================================================================== */
-#mini-map .cell[data-wall-right="true"]::after {
-  content: "";
-  position: absolute;
-  top: -2px;
-  right: -2px;
-  width: 2px;
-  height: calc(100% + 4px);
-  background-color: #000000;
-  z-index: 10;
-}
-
-#mini-map .cell[data-wall-bottom="true"]::before {
-  content: "";
-  position: absolute;
-  left: -2px;
-  bottom: -2px;
-  height: 2px;
-  width: calc(100% + 4px);
-  background-color: #000000;
-  z-index: 10;
-}
-
-#mini-map .cell[data-window-right="true"]::after {
-  content: "";
-  position: absolute;
-  top: -2px;
-  right: -2px;
-  width: 2px;
-  height: calc(100% + 4px);
-  border-right: 2px dashed #8B4513;
-  z-index: 15;
-}
-
-#mini-map .cell[data-window-bottom="true"]::before {
-  content: "";
-  position: absolute;
-  left: -2px;
-  bottom: -2px;
-  height: 2px;
-  width: calc(100% + 4px);
-  border-bottom: 2px dashed #8B4513;
-  z-index: 15;
 }
 
 /* Fixed Token Sizes inside Dynamic Mini-Map Cells */
