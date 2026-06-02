@@ -426,7 +426,7 @@ body {
 
 /* ==========================================================================
    ROLE CONDITIONAL VISIBILITY
-   ========================================================================== */
+   ========================================================================= */
 /* When it's an ATTACK variant panel, hide the DEFENSE action bars completely */
 .guide-panel.attack .d-light,
 .guide-panel.attack .d-dark {
