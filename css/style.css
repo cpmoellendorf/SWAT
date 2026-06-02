@@ -325,7 +325,7 @@ body {
    ========================================================================== */
 .guide-panel {
   width: 260px;
-  height: 380px; /* Expanded height to effortlessly fit all 12 buttons together */
+  height: 275px; /* Restored to original height since it only displays 6 bars at a time */
   background-color: #222222;
   border-radius: 6px;
   overflow: hidden;
@@ -422,6 +422,21 @@ body {
   filter: grayscale(100%) brightness(35%) !important;
   border: 1px dashed #555555 !important;
   box-sizing: border-box;
+}
+
+/* ==========================================================================
+   ROLE CONDITIONAL VISIBILITY
+   ========================================================================== */
+/* When it's an ATTACK variant panel, hide the DEFENSE action bars completely */
+.guide-panel.attack .d-light,
+.guide-panel.attack .d-dark {
+  display: none !important;
+}
+
+/* When it's NOT an attack panel (meaning DEFENSE), hide the ATTACK action bars completely */
+.guide-panel:not(.attack) .a-red,
+.guide-panel:not(.attack) .a-orange {
+  display: none !important;
 }
 
 /* ==========================================================================
