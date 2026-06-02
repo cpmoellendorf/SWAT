@@ -4,13 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SWAT - The Game</title>
-    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
     <h1>Welcome to SWAT!</h1>
     <p>This is an extremely simple digital rendition of Trevor's game, SWAT.</p>
-    
+
     <!-- Multi-user lobby connection panel tracker -->
     <div class="lobby-controls">
         <button id="copy-link-btn">🔗 Copy Share Link</button>
@@ -19,7 +19,7 @@
 
     <!-- WRAPPER LAYOUT CONTAINER -->
     <div class="main-game-layout">
-        
+
         <!-- Left-Hand Sidebar Guide Card -->
         <div class="guide-sidebar-wrapper">
             <div class="guide-panel">
@@ -42,11 +42,11 @@
                 </div>
             </div>
         </div>
-        
+
         <!-- Central 16x11 grid gameboard -->
         <div id="game-board"></div>
 
-        <!-- SIDEBAR CONTROL PANEL -->
+        <!-- Sidebar Control Panel -->
         <div class="sidebar-panel">
             <h3>Supply Depot</h3>
             <div id="supply-grid"></div>
@@ -55,13 +55,8 @@
 
     </div>
 
-    <!-- 1. The official backup CDN library script -->
     <script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.5/dist/peerjs.min.js"></script>
-
-    <!-- 2. Your custom game script -->
-    <script src="js/script.js"></script>
-</body>
-</html>
+    <script src="script.js"></script>
 
 </body>
 </html>

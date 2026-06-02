@@ -1,11 +1,11 @@
 window.addEventListener('load', function() {
 
   // ==========================================================================
-  // GLOBAL CORE SYSTEM VARIATION SETUP
+  // GLOBALS
   // ==========================================================================
   const letters = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O'];
   const board = document.getElementById('game-board');
-  const columns = 16; 
+  const columns = 16;
   const rows = 11;
   const totalCells = columns * rows;
 
@@ -14,23 +14,22 @@ window.addEventListener('load', function() {
   let draggedToken = null;
   let isSupplyToken = false;
 
-  // Read the room ID from the link hash
   let targetPeerId = window.location.hash.substring(1);
 
   const copyBtn = document.getElementById('copy-link-btn');
   const statusText = document.getElementById('link-status');
+  const guideCard = document.querySelector('.guide-panel');
 
   // ==========================================================================
-  // PEER-TO-PEER MULTIPLAYER ENGINE INITIALIZATION (With Auto-Retry)
+  // PEER-TO-PEER MULTIPLAYER ENGINE (With Auto-Retry)
   // ==========================================================================
-  const guideCard = document.querySelector('.guide-panel');
   let retryCount = 0;
   const maxRetries = 5;
 
   function connectToHost() {
     statusText.innerText = `Connecting to Host... (Attempt ${retryCount + 1})`;
     connection = peer.connect(targetPeerId);
-    
+
     connection.on('open', () => {
       setupConnectionListeners();
       statusText.innerText = "🟢 Connected to Host! Game Live.";
@@ -39,15 +38,15 @@ window.addEventListener('load', function() {
 
   try {
     peer = new Peer();
-    
+
     peer.on('open', (id) => {
       if (!targetPeerId) {
-        // --- HOST SIDE (Player 1 = DEFENSE) ---
+        // Host side (Player 1 = Defense)
         window.location.hash = id;
         statusText.innerText = "Ready! Copy link and send to Player 2.";
         if (guideCard) guideCard.classList.remove('attack');
       } else {
-        // --- GUEST SIDE (Player 2 = ATTACK) ---
+        // Guest side (Player 2 = Attack)
         if (guideCard) {
           guideCard.classList.add('attack');
           guideCard.querySelector('.guide-header').innerText = "ATTACK";
@@ -56,24 +55,18 @@ window.addEventListener('load', function() {
       }
     });
 
-    // Host handles incoming connections from Guest dial-ins
     peer.on('connection', (conn) => {
       connection = conn;
       setupConnectionListeners();
       statusText.innerText = "🟢 Player 2 Connected! Game Live.";
     });
 
-    // CATCH THE "PEER-UNAVAILABLE" GLITCH AND RETRY AUTOMATICALLY
     peer.on('error', (err) => {
       console.error("Multiplayer Connection Error:", err);
-      
       if (err.type === 'peer-unavailable' && targetPeerId && retryCount < maxRetries) {
         retryCount++;
         statusText.innerText = "⚠️ Host layout loading... Retrying connection...";
-        // Wait exactly 1.5 seconds to let the Host's server activate, then try again
-        setTimeout(() => {
-          connectToHost();
-        }, 1500);
+        setTimeout(connectToHost, 1500);
       } else {
         statusText.innerText = "⚠️ Connection error. Type: " + err.type;
       }
@@ -84,9 +77,9 @@ window.addEventListener('load', function() {
     statusText.innerText = "⚠️ Network initialization failed.";
   }
 
-
-
-  // Share Link Button Copier
+  // ==========================================================================
+  // SHARE LINK
+  // ==========================================================================
   copyBtn.addEventListener('click', () => {
     navigator.clipboard.writeText(window.location.href).then(() => {
       const oldText = statusText.innerText;
@@ -95,43 +88,25 @@ window.addEventListener('load', function() {
     });
   });
 
-  // ... [Keep the remaining functional code from your previous file exactly the same]
-  // (Your sendNetworkData, setupConnectionListeners, loops, drag/drop cells, and depot grids)
-
-
-  // Outbound Data Transmitter
+  // ==========================================================================
+  // NETWORK
+  // ==========================================================================
   function sendNetworkData(payload) {
     if (connection && connection.open) {
       connection.send(payload);
     }
   }
 
-    // ==========================================================================
-  // DECOUPLED INBOUND DATA RECEIVER (Battleship Style)
-  // ==========================================================================
   function setupConnectionListeners() {
     connection.on('data', (data) => {
-      
-      // Convert the incoming numbers back to tactical coordinates for console logs
       const opponentLetter = letters[data.x];
       const opponentNumber = data.y + 1;
 
       if (data.isNew) {
-        // --- CHOOSE AN ATTACK/DEFENSE INTERACTION RULES ENGINE ---
-        // Instead of instantly spawning a visible token on your map, 
-        // the code logs it privately so you know what your opponent did.
         console.log(`📡 RADAR ALERT: Opponent instantiated a token on THEIR board at ${opponentLetter}${opponentNumber}.`);
-        
-        /* 
-        NOTE: If you WANT to show where they placed something, you can customize it here.
-        For example, you could spawn a special "Target Dot" instead of their actual player piece.
-        */
-        
       } else if (data.isDelete) {
         console.log(`📡 RADAR ALERT: Opponent deleted a token on THEIR board at ${letters[data.oldX]}${data.oldY + 1}.`);
-        
       } else {
-        // Tracker for normal piece movements
         console.log(`📡 RADAR ALERT: Opponent shifted a piece on THEIR map from ${letters[data.oldX]}${data.oldY + 1} to ${opponentLetter}${opponentNumber}.`);
       }
     });
@@ -139,15 +114,10 @@ window.addEventListener('load', function() {
     connection.on('close', () => {
       statusText.innerText = "🔴 Opponent disconnected.";
     });
-
-
-    connection.on('close', () => {
-      statusText.innerText = "🔴 Opponent disconnected.";
-    });
   }
 
   // ==========================================================================
-  // CENTRALIZED COMPONENT DRAG BINDINGS
+  // DRAG BINDINGS
   // ==========================================================================
   function bindTokenDragEvents(token, fromSupplyDepot) {
     token.addEventListener('dragstart', function(event) {
@@ -156,7 +126,7 @@ window.addEventListener('load', function() {
       event.dataTransfer.effectAllowed = 'move';
       setTimeout(() => { token.classList.add('dragging'); }, 1);
     });
-    
+
     token.addEventListener('dragend', function() {
       token.classList.remove('dragging');
       draggedToken = null;
@@ -165,83 +135,65 @@ window.addEventListener('load', function() {
   }
 
   // ==========================================================================
-  // GRID BOARD INTERACTION CAPABILITIES & BOUNDARY LOCKDOWN
+  // GRID CELL EVENT CONFIGURATION
   // ==========================================================================
   function configureGridCellEvents(cell, gameX, gameY) {
     cell.addEventListener('dragover', function(event) {
-      event.preventDefault(); 
+      event.preventDefault();
       const isIllegalZone = cell.matches('[data-wall-right="true"], [data-wall-bottom="true"], [data-window-right="true"], [data-window-bottom="true"]');
-      event.dataTransfer.dropEffect = isIllegalZone ? 'none' : 'move'; 
+      event.dataTransfer.dropEffect = isIllegalZone ? 'none' : 'move';
     });
 
-      cell.addEventListener('drop', function(event) {
-    event.preventDefault();
-    if (!draggedToken) return;
+    cell.addEventListener('drop', function(event) {
+      event.preventDefault();
+      if (!draggedToken) return;
 
-    const isWallOrWindow = cell.matches('[data-wall-right="true"], [data-wall-bottom="true"], [data-window-right="true"], [data-window-bottom="true"]');
-    if (isWallOrWindow) return; 
+      const isWallOrWindow = cell.matches('[data-wall-right="true"], [data-wall-bottom="true"], [data-window-right="true"], [data-window-bottom="true"]');
+      if (isWallOrWindow) return;
 
-    if (isSupplyToken) {
-      // 1. Instantiate the token completely on your own board
-      const tokenClone = draggedToken.cloneNode(true);
-      tokenClone.classList.remove('dragging');
-      const colorClass = Array.from(draggedToken.classList).find(c => c !== 'token' && c !== 'dragging') || '';
-      
-      bindTokenDragEvents(tokenClone, false);
-      cell.appendChild(tokenClone); // Stays local to your screen!
+      if (isSupplyToken) {
+        const tokenClone = draggedToken.cloneNode(true);
+        tokenClone.classList.remove('dragging');
+        const colorClass = Array.from(draggedToken.classList).find(c => c !== 'token' && c !== 'dragging') || '';
 
-      // 2. Alert your opponent of your action wirelessly
-      sendNetworkData({ 
-        isNew: true, 
-        color: colorClass, 
-        x: gameX, 
-        y: gameY 
-      });
-      
-      console.log(`You placed a token at ${letters[gameX]}${gameY + 1}.`);
-    } else {
-      // 1. Move the existing piece locally on your own board
-      const oldX = parseInt(draggedToken.parentElement.dataset.x);
-      const oldY = parseInt(draggedToken.parentElement.dataset.y);
-      
-      cell.appendChild(draggedToken); // Stays local to your screen!
+        bindTokenDragEvents(tokenClone, false);
+        cell.appendChild(tokenClone);
 
-      // 2. Alert your opponent of your relocation wirelessly
-      sendNetworkData({ 
-        isNew: false, 
-        oldX: oldX, 
-        oldY: oldY, 
-        x: gameX, 
-        y: gameY 
-      });
-      
-      console.log(`You moved your token to ${letters[gameX]}${gameY + 1}.`);
-    }
-  });
+        sendNetworkData({ isNew: true, color: colorClass, x: gameX, y: gameY });
+        console.log(`You placed a token at ${letters[gameX]}${gameY + 1}.`);
+      } else {
+        const oldX = parseInt(draggedToken.parentElement.dataset.x);
+        const oldY = parseInt(draggedToken.parentElement.dataset.y);
+
+        cell.appendChild(draggedToken);
+
+        sendNetworkData({ isNew: false, oldX: oldX, oldY: oldY, x: gameX, y: gameY });
+        console.log(`You moved your token to ${letters[gameX]}${gameY + 1}.`);
+      }
+    });
   }
 
   // ==========================================================================
-  // GRID GENERATOR INITIALIZATION LOOP
+  // GRID GENERATOR
   // ==========================================================================
   for (let i = 0; i < totalCells; i++) {
     const col = i % columns;
     const row = Math.floor(i / columns);
 
     if (row === 0 && col === 0) board.appendChild(createDiv('label', ''));
-    else if (row === 0)          board.appendChild(createDiv('label', letters[col - 1]));
-    else if (col === 0)          board.appendChild(createDiv('label', row));
-    
+    else if (row === 0)         board.appendChild(createDiv('label', letters[col - 1]));
+    else if (col === 0)         board.appendChild(createDiv('label', row));
     else {
       const cell = createDiv('cell', '');
-      const gameX = col - 1; 
-      const gameY = row - 1; 
+      const gameX = col - 1;
+      const gameY = row - 1;
       cell.dataset.x = gameX;
       cell.dataset.y = gameY;
-      
-      // --- MAP DESIGN PRESETS ---
+
+      // Map design presets
       if (gameX === 0 && gameY === 0) cell.setAttribute('data-wall-right', 'true');
       if (gameX === 1 && gameY === 1) cell.setAttribute('data-window-right', 'true');
-      
+
       configureGridCellEvents(cell, gameX, gameY);
       board.appendChild(cell);
     }
@@ -255,7 +207,7 @@ window.addEventListener('load', function() {
   }
 
   // ==========================================================================
-  // SUPPLY DEPOT & TRASH BIN INITIALIZATION
+  // SUPPLY DEPOT & TRASH BIN
   // ==========================================================================
   const supplyGrid = document.getElementById('supply-grid');
   const trashBin = document.getElementById('trash-bin');
@@ -269,7 +221,7 @@ window.addEventListener('load', function() {
       supplyToken.classList.add('token');
       supplyToken.setAttribute('draggable', 'true');
       if (supplyItems[i]) supplyToken.classList.add(supplyItems[i]);
-      bindTokenDragEvents(supplyToken, true); 
+      bindTokenDragEvents(supplyToken, true);
       slot.appendChild(supplyToken);
     }
     supplyGrid.appendChild(slot);
@@ -288,8 +240,7 @@ window.addEventListener('load', function() {
       const tokenIndex = Array.from(draggedToken.parentElement.children).indexOf(draggedToken);
 
       draggedToken.remove();
-      
-      // Transmit deletion request to peer
+
       sendNetworkData({ isDelete: true, oldX: oldX, oldY: oldY, tokenIndex: tokenIndex });
     }
   });

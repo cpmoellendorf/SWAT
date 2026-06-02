@@ -1,144 +1,142 @@
-body { 
-  background-color: #1a1a1a; 
-  color: #ffffff; 
-  font-family: sans-serif; 
-  display: flex; 
-  flex-direction: column; 
-  align-items: center; 
-  padding: 20px; 
-} 
+body {
+  background-color: #1a1a1a;
+  color: #ffffff;
+  font-family: sans-serif;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px;
+}
 
-#game-board { 
-  display: grid; 
-  grid-template-columns: repeat(16, 1fr); 
-  grid-template-rows: repeat(11, 1fr); 
-  width: 640px; 
-  height: 440px; 
-  gap: 2px; 
-  background-color: #f6f6f6; 
-  margin-top: 20px; 
-} 
+/* ==========================================================================
+   GAME BOARD
+   ========================================================================== */
 
-.cell { 
-  background-color: #ffffff; 
-  width: 100%; 
-  height: 100%; 
-  cursor: pointer; 
-  position: relative; 
-  
-  /* STACKING MANAGEMENT: Sets up flex layout rules */ 
-  display: flex; 
-  align-items: center; 
-  justify-content: center; 
-  flex-wrap: wrap;       
-  gap: 1px;              
-  padding: 1px; /* Tighter padding leaves more space for larger tokens */         
+#game-board {
+  display: grid;
+  grid-template-columns: repeat(16, 1fr);
+  grid-template-rows: repeat(11, 1fr);
+  width: 640px;
+  height: 440px;
+  gap: 2px;
+  background-color: #f6f6f6;
+  margin-top: 20px;
+}
+
+.cell {
+  background-color: #ffffff;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+  position: relative;
+
+  /* Flex layout for stacked tokens */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 1px;
+  padding: 1px;
   box-sizing: border-box;
 
-  /* LAYER BOUNDARY LOCKS: Physically bars cells from growing or resizing */
-  max-width: 38.125px;   
-  max-height: 38.18px;   
-  overflow: hidden;      
-} 
+  /* Prevent cells from growing or resizing */
+  max-width: 38.125px;
+  max-height: 38.18px;
+  overflow: hidden;
+}
 
-.cell:hover { 
-  background-color: #e0e0e0; 
-} 
+.cell:hover {
+  background-color: #e0e0e0;
+}
 
-/* Static tracking edges (A-O and 1-10) */ 
-.label { 
-  background-color: #222222; 
-  color: #ffffff; 
-  font-weight: bold; 
-  display: flex; 
-  align-items: center; 
-  justify-content: center; 
-  font-family: sans-serif; 
-  font-size: 0.9rem; 
-  user-select: none; 
-  width: 100%; 
-  height: 100%; 
-} 
+/* Static tracking edge labels (A–O and 1–10) */
+.label {
+  background-color: #222222;
+  color: #ffffff;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: sans-serif;
+  font-size: 0.9rem;
+  user-select: none;
+  width: 100%;
+  height: 100%;
+}
 
-/* ========================================================================== 
-   WALL INFRASTRUCTURE (Draws lines directly inside the 2px grid gaps) 
-   ========================================================================== */ 
+/* ==========================================================================
+   WALLS (Solid black lines drawn into the 2px grid gaps)
+   ========================================================================== */
 
-/* Right Wall: Projects line outward right into the vertical gap layout */ 
-.cell[data-wall-right="true"]::after { 
-  content: ""; 
-  position: absolute; 
-  top: -2px; 
-  right: -2px; 
-  width: 2px; 
-  height: calc(100% + 4px); 
-  background-color: #000000; 
-  z-index: 10; 
-} 
+.cell[data-wall-right="true"]::after {
+  content: "";
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 2px;
+  height: calc(100% + 4px);
+  background-color: #000000;
+  z-index: 10;
+}
 
-/* Bottom Wall: Projects line outward down into the horizontal gap layout */ 
-.cell[data-wall-bottom="true"]::before { 
-  content: ""; 
-  position: absolute; 
-  left: -2px; 
-  bottom: -2px; 
-  height: 2px; 
-  width: calc(100% + 4px); 
-  background-color: #000000; 
-  z-index: 10; 
-} 
+.cell[data-wall-bottom="true"]::before {
+  content: "";
+  position: absolute;
+  left: -2px;
+  bottom: -2px;
+  height: 2px;
+  width: calc(100% + 4px);
+  background-color: #000000;
+  z-index: 10;
+}
 
-/* ========================================================================== 
-   WINDOW INFRASTRUCTURE (Draws clean, tight brown dashes in the gaps) 
-   ========================================================================== */ 
+/* ==========================================================================
+   WINDOWS (Brown dashed lines drawn into the 2px grid gaps)
+   ========================================================================== */
 
-/* Right Window: Tight vertical dashed line in the gap */ 
-.cell[data-window-right="true"]::after { 
-  content: ""; 
-  position: absolute; 
-  top: -2px; 
-  right: -2px; 
-  width: 2px; 
-  height: calc(100% + 4px); 
-  border-right: 2px dashed #8B4513; 
-  z-index: 15; 
-} 
+.cell[data-window-right="true"]::after {
+  content: "";
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 2px;
+  height: calc(100% + 4px);
+  border-right: 2px dashed #8B4513;
+  z-index: 15;
+}
 
-/* Bottom Window: Tight horizontal dashed line in the gap */ 
-.cell[data-window-bottom="true"]::before { 
-  content: ""; 
-  position: absolute; 
-  left: -2px; 
-  bottom: -2px; 
-  height: 2px; 
-  width: calc(100% + 4px); 
-  border-bottom: 2px dashed #8B4513; 
-  z-index: 15; 
-} 
+.cell[data-window-bottom="true"]::before {
+  content: "";
+  position: absolute;
+  left: -2px;
+  bottom: -2px;
+  height: 2px;
+  width: calc(100% + 4px);
+  border-bottom: 2px dashed #8B4513;
+  z-index: 15;
+}
 
-/* ========================================================================== 
-   TOKENS INFRASTRUCTURE (Forced Small Drag Previews)
-   ========================================================================= */ 
+/* ==========================================================================
+   TOKENS
+   ========================================================================== */
 
-/* Base token style: a perfect circle floating in the center of the cell */ 
-.token { 
-  border-radius: 50%; 
-  background-color: #21781e; 
-  z-index: 5; 
-  user-select: none; 
+.token {
+  border-radius: 50%;
+  background-color: #21781e;
+  z-index: 5;
+  user-select: none;
   cursor: grab;
-  
+
   flex-grow: 0;
   flex-shrink: 1;
-  
-  flex-basis: 26px; 
+  flex-basis: 26px;
   width: 26px;
   height: 26px;
-  max-width: 26px;  
+  max-width: 26px;
   max-height: 26px;
-} 
+}
 
-/* Double Stack: Shrinks tokens to 16px (including while dragging) */
+/* Two tokens in a cell: shrink to 16px */
 .cell:has(.token:nth-child(2)) .token {
   flex-basis: 16px;
   width: 16px;
@@ -147,7 +145,7 @@ body {
   max-height: 16px;
 }
 
-/* Multi Stack: Shrinks tokens to 11px (including while dragging) */
+/* Three or more tokens in a cell: shrink to 11px */
 .cell:has(.token:nth-child(3)) .token {
   flex-basis: 11px;
   width: 11px;
@@ -156,108 +154,97 @@ body {
   max-height: 11px;
 }
 
-/* PROTECTION SELECTOR: Stops overlapping tokens from blocking drag tracking */
-.token * {
-  pointer-events: none;
+/* Prevent child elements from intercepting drag events */
+.token * { pointer-events: none; }
+.token   { pointer-events: auto; }
+
+/* Player color variants */
+.token.light-blue { background-color: #00b4d8; }
+.token.dark-blue  { background-color: #070bce; }
+.token.pink       { background-color: #ff85a1; }
+.token.red        { background-color: #d90429; }
+
+/* Drag states */
+.token:active   { cursor: grabbing; }
+.token.dragging { opacity: 0.4; }
+
+/* ==========================================================================
+   LAYOUT
+   ========================================================================== */
+
+.main-game-layout {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 40px;
+  margin-top: 20px;
+  flex-wrap: nowrap;
 }
-.token {
-  pointer-events: auto;
+
+.guide-sidebar-wrapper {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  height: 480px;
 }
 
-
-/* ========================================================================== 
-   PLAYER TOKENS INFRASTRUCTURE (Identical template with custom colors) 
-   ========================================================================== */ 
-
-/* Player color variants that override the default dark green look */ 
-.token.light-blue { background-color: #00b4d8; } 
-.token.dark-blue  { background-color: #070bce; } 
-.token.pink       { background-color: #ff85a1; } 
-.token.red        { background-color: #d90429; } 
-
-/* ========================================================================== 
-   DRAG AND DROP STATES 
-   ========================================================================== */ 
-
-/* Switches to a fist grab appearance when the user clicks down to drag */ 
-.token:active { 
-  cursor: grabbing; 
-} 
-
-/* Dims the original token sitting in the source cell while its ghost is being moved */ 
-.token.dragging { 
-  opacity: 0.4; 
-} 
-
-/* ========================================================================== 
-   SIDEBAR & UTILITY INFRASTRUCTURE 
-   ========================================================================== */ 
-
-/* Aligns the game board and supply sidebar horizontally with 40px padding */ 
-.main-game-layout { 
-  display: flex; 
-  flex-direction: row; 
-  align-items: flex-start; 
-  gap: 40px; 
-  margin-top: 20px; 
-} 
-
-.sidebar-panel { 
-  display: flex; 
-  flex-direction: column; 
-  align-items: center; 
-  font-family: sans-serif; 
-} 
-
-/* Creates a solid 2x5 matrix for token distribution */ 
-#supply-grid { 
-  display: grid; 
-  grid-template-columns: repeat(2, 1fr); 
-  grid-template-rows: repeat(5, 1fr); 
-  width: 100px; 
-  height: 250px; 
-  gap: 2px; 
-  background-color: #333333; 
-} 
-
-/* Base style for individual inventory slots */ 
-.supply-slot { 
-  background-color: #222222; 
-  display: flex; 
-  align-items: center; 
-  justify-content: center; 
-  width: 100%; 
-  height: 100%; 
-} 
-
-/* Deletion zone configuration */ 
-#trash-bin { 
-  margin-top: 30px; 
-  width: 100px; 
-  height: 50px; 
-  background-color: #9b2226; 
-  color: #ffffff; 
-  font-weight: bold; 
-  display: flex; 
-  align-items: center; 
-  justify-content: center; 
-  border-radius: 4px; 
-  cursor: pointer; 
-  border: 2px solid #ae2012; 
-  user-select: none; 
-} 
-
-#trash-bin:hover { 
-  background-color: #ae2012; 
+.sidebar-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-family: sans-serif;
 }
 
 /* ==========================================================================
-   LEFT-HAND SIDEBAR GUIDE CARD (Tactical Cheat Sheet)
+   SUPPLY DEPOT
+   ========================================================================== */
+
+#supply-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  grid-template-rows: repeat(5, 1fr);
+  width: 100px;
+  height: 250px;
+  gap: 2px;
+  background-color: #333333;
+}
+
+.supply-slot {
+  background-color: #222222;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+
+#trash-bin {
+  margin-top: 30px;
+  width: 100px;
+  height: 50px;
+  background-color: #9b2226;
+  color: #ffffff;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  cursor: pointer;
+  border: 2px solid #ae2012;
+  user-select: none;
+}
+
+#trash-bin:hover {
+  background-color: #ae2012;
+}
+
+/* ==========================================================================
+   GUIDE CARD (Tactical Cheat Sheet)
    ========================================================================== */
 
 .guide-panel {
-  width: 260px;            /* Taller than it is wide */
-  height: 240px;           /* Perfectly matches your 440px board height alignment */
+  width: 260px;
+  height: 240px;
   background-color: #222222;
   border-radius: 6px;
   overflow: hidden;
@@ -265,13 +252,12 @@ body {
   display: flex;
   flex-direction: column;
   font-family: sans-serif;
-  user-select: none;       /* Non-interactive: prevents text highlighted selection */
-  pointer-events: none;    /* Non-interactive: ignores all clicks or drag overrides */
+  user-select: none;
+  pointer-events: none;
 }
 
-/* Light blue operational banner */
 .guide-header {
-  background-color: #00b4d8; 
+  background-color: #00b4d8;
   color: #1a1a1a;
   font-weight: bold;
   text-align: center;
@@ -280,7 +266,6 @@ body {
   letter-spacing: 2px;
 }
 
-/* Side-by-side core configuration zone */
 .guide-body {
   display: flex;
   flex-direction: row;
@@ -290,19 +275,18 @@ body {
 }
 
 .guide-column {
-  flex: 1; /* Splits both sections to take up exactly 50% width */
+  flex: 1;
   display: flex;
   flex-direction: column;
 }
 
-/* Left list formatting */
 .guide-column.left-info ul {
   list-style-type: none;
   padding: 0;
   margin: 0;
   display: flex;
   flex-direction: column;
-  gap: 20px; /* Distinct spatial gap between tracking list elements */
+  gap: 20px;
 }
 
 .guide-column.left-info li {
@@ -312,15 +296,25 @@ body {
 }
 
 .guide-column.left-info strong {
-  color: #00b4d8; /* Highlight action words using the light blue theme */
+  color: #00b4d8;
   display: block;
 }
 
-/* Right visual status bar formatting */
 .guide-column.right-bars {
   justify-content: flex-start;
   gap: 14px;
-  padding-top: 4;
+  padding-top: 4px;
+}
+
+.bars-header {
+  color: #00b4d8;
+  font-weight: bold;
+  font-size: 0.8rem;
+  letter-spacing: 1px;
+  text-align: center;
+  margin-bottom: -5px;
+  border-bottom: 1px solid #333333;
+  padding-bottom: 4px;
 }
 
 .action-bar {
@@ -333,73 +327,36 @@ body {
   font-weight: bold;
 }
 
-/* Three generic light blue tracks */
 .action-bar.light {
   background-color: #00b4d8;
-  opacity: 0.6; /* Slightly translucent for basic visual bars */
+  opacity: 0.6;
 }
 
-/* Ultimate dark blue structural tracker track */
 .action-bar.dark {
-  background-color: #070bce; /* Deep navy style matching your dark blue players */
+  background-color: #070bce;
   color: #ffffff;
   letter-spacing: 1px;
-}
-
-/* Update your main game layout to center items vertically on the horizontal row */
-.main-game-layout { 
-  display: flex; 
-  flex-direction: row; 
-  /* NEW: Instructs all three primary layout columns to align to their vertical centers */
-  align-items: center; 
-  gap: 40px; 
-  margin-top: 20px; 
-  flex-wrap: nowrap;
-}
-
-/* NEW WRAPPER STYLING: Dictates how the left panel floats vertically */
-.guide-sidebar-wrapper {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  /* Matches the 480px total height of the grid board area with its text headers */
-  height: 480px; 
-}
-
-.bars-header {
-  color: #00b4d8;          /* Fits the light blue defense theme */
-  font-weight: bold;
-  font-size: 0.8rem;
-  letter-spacing: 1px;
-  text-align: center;
-  margin-bottom: -5px;      /* Creates breathing room above the blue tracks */
-  border-bottom: 1px solid #333333; /* Adds a clean tactical dividing rule line */
-  padding-bottom: 4px;
 }
 
 /* ==========================================================================
-   ATTACK SIDE OVERRIDES (Dynamic Side Variants)
+   GUIDE CARD — ATTACK VARIANT
    ========================================================================== */
 
-/* Turns the header orange for the Attacker */
 .guide-panel.attack .guide-header {
-  background-color: #f77f00; /* Vibrant Tactical Orange */
+  background-color: #f77f00;
   color: #ffffff;
 }
 
-/* Changes the left list text accent colors to match the orange theme */
 .guide-panel.attack .guide-column.left-info strong,
 .guide-panel.attack .bars-header {
   color: #f77f00;
 }
 
-/* Tints the generic action bars to an orange profile */
 .guide-panel.attack .action-bar.light {
   background-color: #f77f00;
   opacity: 0.6;
 }
 
-/* Completely deletes the 4th dark blue "Scan Only" bar for the attacker */
 .guide-panel.attack .action-bar.dark {
   display: none;
 }
