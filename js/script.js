@@ -244,13 +244,61 @@ window.addEventListener('load', function() {
         miniCellOrLabel.dataset.x = gameX;
         miniCellOrLabel.dataset.y = gameY;
 
-        if (gameX === 0 && gameY === 0) {
-          mainCellOrLabel.setAttribute('data-wall-right', 'true');
-          miniCellOrLabel.setAttribute('data-wall-right', 'true');
+        // ==========================================================================
+        // EXAMPLE WALLS AND WINDOW MAP LAYOUT
+        // Coordinates run from gameX: 0 to 14 (Columns A-N) and gameY: 0 to 9 (Rows 1-10)
+        // ==========================================================================
+
+        // --- Room 1 Walls (Top Left Enclosure) ---
+        // Top perimeter wall line
+        if (gameY === 1 && gameX >= 2 && gameX <= 6) {
+          mainCellOrLabel.setAttribute('data-wall-bottom', 'true');
+          miniCellOrLabel.setAttribute('data-wall-bottom', 'true');
         }
-        if (gameX === 1 && gameY === 1) {
-          mainCellOrLabel.setAttribute('data-window-right', 'true');
-          miniCellOrLabel.setAttribute('data-window-right', 'true');
+        // Left room border with a window placement
+        if (gameX === 1 && gameY >= 2 && gameY <= 5) {
+          if (gameY === 3) {
+            // Adds a brown tactical window breakout on the right border line
+            mainCellOrLabel.setAttribute('data-window-right', 'true');
+            miniCellOrLabel.setAttribute('data-window-right', 'true');
+          } else {
+            mainCellOrLabel.setAttribute('data-wall-right', 'true');
+            miniCellOrLabel.setAttribute('data-wall-right', 'true');
+          }
+        }
+        // Right room border with an open doorway at Row 4
+        if (gameX === 6 && gameY >= 2 && gameY <= 5) {
+          if (gameY !== 4) { // Skips row 4 to naturally leave an open door gap
+            mainCellOrLabel.setAttribute('data-wall-right', 'true');
+            miniCellOrLabel.setAttribute('data-wall-right', 'true');
+          }
+        }
+        // Bottom perimeter wall line
+        if (gameY === 5 && gameX >= 2 && gameX <= 6) {
+          mainCellOrLabel.setAttribute('data-wall-bottom', 'true');
+          miniCellOrLabel.setAttribute('data-wall-bottom', 'true');
+        }
+
+        // --- Divider Walls & Long Hallways ---
+        // Center dividing long line running vertically down column H (gameX === 7)
+        if (gameX === 7 && gameY >= 1 && gameY <= 8) {
+          if (gameY !== 4 && gameY !== 5) { // Doorway gap in the middle of the hallway
+            mainCellOrLabel.setAttribute('data-wall-right', 'true');
+            miniCellOrLabel.setAttribute('data-wall-right', 'true');
+          }
+        }
+
+        // --- Room 2 Walls (Right Side Enclosure) ---
+        // Horizontal separation line cutting through columns J to M
+        if (gameY === 4 && gameX >= 9 && gameX <= 12) {
+          if (gameX === 11) {
+            // Drop a horizontal window over column L
+            mainCellOrLabel.setAttribute('data-window-bottom', 'true');
+            miniCellOrLabel.setAttribute('data-window-bottom', 'true');
+          } else {
+            mainCellOrLabel.setAttribute('data-wall-bottom', 'true');
+            miniCellOrLabel.setAttribute('data-wall-bottom', 'true');
+          }
         }
 
         configureGridCellEvents(mainCellOrLabel, gameX, gameY, false);
