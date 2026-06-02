@@ -444,27 +444,31 @@ body {
 }
 
 /* ==========================================================================
-   ROLE CONDITIONAL VISIBILITY
+   ROLE CONDITIONAL VISIBILITY (Improved)
    ========================================================================== */
 
-/* 1. DEFAULT STATE (DEFENSE): Hide attack bars, ensure defense bars are visible */
+/* Hide all action bars by default */
+.guide-panel .a-red,
 .guide-panel .a-orange,
-.guide-panel .a-red {
-  display: none !important;
-}
 .guide-panel .d-light,
 .guide-panel .d-dark {
-  display: block !important;
+  display: none;
 }
 
-/* 2. ATTACK STATE: Hide defense bars, show attack bars */
+/* Default: Show Defense Bars */
+.guide-panel .d-light,
+.guide-panel .d-dark {
+  display: flex; /* Changed from block to flex to maintain alignment */
+}
+
+/* Attack State: Show Attack Bars */
 .guide-panel.attack .d-light,
 .guide-panel.attack .d-dark {
-  display: none !important;
+  display: none;
 }
-.guide-panel.attack .a-orange,
-.guide-panel.attack .a-red {
-  display: block !important;
+.guide-panel.attack .a-red,
+.guide-panel.attack .a-orange {
+  display: flex; /* Changed from block to flex */
 }
 
 /* ==========================================================================
