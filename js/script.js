@@ -106,6 +106,32 @@ window.addEventListener('load', function() {
       const opponentLetter = letters[data.x];
       const opponentNumber = data.y + 1;
 
+      // Handle Cross-Map Transfer: Token moved completely from Main Board to Mini-Map or vice versa
+      if (data.isCrossMapTransfer) {
+        // 1. Remote clean up from the source map
+        const sourceMap = data.sourceIsMiniMap ? miniMap : board;
+        const oldCell = sourceMap.querySelector(`.cell[data-x="${data.oldX}"][data-y="${data.oldY}"]`);
+        if (oldCell && oldCell.children[data.tokenIndex]) {
+          oldCell.children[data.tokenIndex].remove();
+        }
+
+        // 2. Remote instantiate onto the destination map
+        const destMap = data.isMiniMap ? miniMap : board;
+        const targetCell = destMap.querySelector(`.cell[data-x="${data.x}"][data-y="${data.y}"]`);
+        if (targetCell) {
+          const remoteToken = document.createElement('div');
+          remoteToken.className = `token ${data.color}`;
+          remoteToken.innerText = data.textLabel || '';
+          remoteToken.setAttribute('draggable', 'true');
+          bindTokenDragEvents(remoteToken, false);
+          targetCell.appendChild(remoteToken);
+        }
+        
+        console.log(`📡 RADAR ALERT: Opponent moved a token across maps to ${data.isMiniMap ? 'Mini-Map' : 'Main Board'} ${opponentLetter}${opponentNumber}.`);
+        return;
+      }
+
+      // Handle standard Mini-Map mutations
       if (data.isMiniMap) {
         const targetCell = miniMap.querySelector(`.cell[data-x="${data.x}"][data-y="${data.y}"]`);
         if (!targetCell) return;
@@ -134,6 +160,7 @@ window.addEventListener('load', function() {
         return;
       }
 
+      // Handle standard Main Board mutations
       if (data.isNew) {
         console.log(`📡 RADAR ALERT: Opponent instantiated a token [${data.textLabel || 'Blank'}] on THEIR board at ${opponentLetter}${opponentNumber}.`);
       } else if (data.isDelete) {
@@ -166,13 +193,12 @@ window.addEventListener('load', function() {
     });
   }
 
-// ==========================================================================
+  // ==========================================================================
   // GRID CELL EVENT CONFIGURATION
   // ==========================================================================
   function configureGridCellEvents(cell, gameX, gameY, isMiniMapBoard) {
     cell.addEventListener('dragover', function(event) {
       event.preventDefault();
-      // REMOVED the illegal zone check so cells with borders can still accept token drop events
       event.dataTransfer.dropEffect = 'move';
     });
 
@@ -180,13 +206,11 @@ window.addEventListener('load', function() {
       event.preventDefault();
       if (!draggedToken) return;
 
-      // REMOVED the wall/window check here as well to allow placements
       const sourceIsMiniMap = !!draggedToken.parentElement.closest('#mini-map');
-      if (!isSupplyToken && (sourceIsMiniMap !== isMiniMapBoard)) return;
-
       const colorClass = Array.from(draggedToken.classList).find(c => c !== 'token' && c !== 'dragging') || '';
       const textLabel = draggedToken.innerText;
 
+      // Case A: Fresh deployment from the Supply Depot
       if (isSupplyToken) {
         const tokenClone = draggedToken.cloneNode(true);
         tokenClone.classList.remove('dragging');
@@ -201,22 +225,45 @@ window.addEventListener('load', function() {
           sendNetworkData({ isNew: true, color: colorClass, textLabel: textLabel, x: gameX, y: gameY });
           console.log(`You placed a token [${textLabel}] at ${letters[gameX]}${gameY + 1}.`);
         }
-      } else {
+      } 
+      // Case B: Moving an already existing map token
+      else {
         const oldX = parseInt(draggedToken.parentElement.dataset.x);
         const oldY = parseInt(draggedToken.parentElement.dataset.y);
+        const tokenIndex = Array.from(draggedToken.parentElement.children).indexOf(draggedToken);
+        const isCrossMap = sourceIsMiniMap !== isMiniMapBoard;
 
         cell.appendChild(draggedToken);
 
-        if (isMiniMapBoard) {
-          sendNetworkData({ isMiniMap: true, isNew: false, color: colorClass, textLabel: textLabel, oldX: oldX, oldY: oldY, x: gameX, y: gameY });
-          console.log(`Shared Mini-Map updated: Moved token to ${letters[gameX]}${gameY + 1}.`);
+        if (isCrossMap) {
+          // Send special packet indicating map swap so the client recreates/destroys properly
+          sendNetworkData({
+            isCrossMapTransfer: true,
+            sourceIsMiniMap: sourceIsMiniMap,
+            isMiniMap: isMiniMapBoard,
+            color: colorClass,
+            textLabel: textLabel,
+            oldX: oldX,
+            oldY: oldY,
+            tokenIndex: tokenIndex,
+            x: gameX,
+            y: gameY
+          });
+          console.log(`Cross-map shift! Token transferred to ${isMiniMapBoard ? 'Shared Mini-Map' : 'Main Board'} at ${letters[gameX]}${gameY + 1}.`);
         } else {
-          sendNetworkData({ isNew: false, oldX: oldX, oldY: oldY, x: gameX, y: gameY });
-          console.log(`You moved your token to ${letters[gameX]}${gameY + 1}.`);
+          // Standard intra-map shift rules
+          if (isMiniMapBoard) {
+            sendNetworkData({ isMiniMap: true, isNew: false, color: colorClass, textLabel: textLabel, oldX: oldX, oldY: oldY, x: gameX, y: gameY });
+            console.log(`Shared Mini-Map updated: Moved token to ${letters[gameX]}${gameY + 1}.`);
+          } else {
+            sendNetworkData({ isNew: false, oldX: oldX, oldY: oldY, x: gameX, y: gameY });
+            console.log(`You moved your token to ${letters[gameX]}${gameY + 1}.`);
+          }
         }
       }
     });
   }
+
   // ==========================================================================
   // GRID GENERATORS (Simultaneous Twin Build)
   // ==========================================================================
@@ -241,24 +288,15 @@ window.addEventListener('load', function() {
         miniCellOrLabel.dataset.x = gameX;
         miniCellOrLabel.dataset.y = gameY;
 
-        // ==========================================================================
-        // INSTANT VISUAL WALL TEST
-        // Targets the very top-left playable cells of your board
-        // ==========================================================================
-
-        // 1. This will put a thick solid black line under cell A1 (gameX: 0, gameY: 0)
+        // Visual Wall Tests
         if (gameX === 0 && gameY === 0) {
           mainCellOrLabel.setAttribute('data-wall-bottom', 'true');
           miniCellOrLabel.setAttribute('data-wall-bottom', 'true');
         }
-
-        // 2. This will put a thick solid black line to the right of cell B1 (gameX: 1, gameY: 0)
         if (gameX === 1 && gameY === 0) {
           mainCellOrLabel.setAttribute('data-wall-right', 'true');
           miniCellOrLabel.setAttribute('data-wall-right', 'true');
         }
-
-        // 3. This will put a dashed brown window line under cell C1 (gameX: 2, gameY: 0)
         if (gameX === 2 && gameY === 0) {
           mainCellOrLabel.setAttribute('data-window-bottom', 'true');
           miniCellOrLabel.setAttribute('data-window-bottom', 'true');
@@ -286,7 +324,6 @@ window.addEventListener('load', function() {
   const supplyGrid = document.getElementById('supply-grid');
   const trashBin = document.getElementById('trash-bin');
   
-  // Custom definitions array storing color classes and character typography strings
   const customSupplyItems = [
     { color: 'light-blue',  label: '' },
     { color: 'dark-blue',   label: '' },
@@ -297,7 +334,7 @@ window.addEventListener('load', function() {
     { color: 'grey',        label: 'X' },
     { color: 'light-green', label: 'AREA' },
     { color: 'grey',        label: 'AREA' },
-    null // 10th slot is completely empty with no selectable token inside
+    null 
   ];
 
   if (supplyGrid) {
