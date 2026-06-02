@@ -78,7 +78,7 @@ body {
   height: 8px;
   max-width: 8px;
   max-height: 8px;
-  font-size: 0px; /* Hide text label on tiny layout stacks */
+  font-size: 0px; 
 }
 
 /* ==========================================================================
@@ -186,7 +186,7 @@ body {
    ========================================================================== */
 .token {
   border-radius: 50%;
-  background-color: #1b4d18; /* Muted base green backup */
+  background-color: #1b4d18; 
   z-index: 5;
   user-select: none;
   cursor: grab;
@@ -198,7 +198,6 @@ body {
   max-width: 26px;
   max-height: 26px;
   
-  /* Text Formatting Alignment Rules */
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -223,7 +222,7 @@ body {
   height: 11px;
   max-width: 11px;
   max-height: 11px;
-  font-size: 0px; /* Collapse text overflow on triple stacked grids */
+  font-size: 0px; 
 }
 
 /* Token Colors */
@@ -236,10 +235,15 @@ body {
 /* Custom Specialty Label Tokens */
 .token.black       { background-color: #000000; color: #ffffff; }
 .token.grey        { background-color: #666666; color: #ffffff; }
-.token.light-green { background-color: #70e000; color: #1a1a1a; font-size: 7px; }
-.token.blank-slot   { background-color: #ffffff; border: 1px solid #999999; box-sizing: border-box; }
+.token.light-green { background-color: #70e000; color: #1a1a1a; }
 
-/* Shrink specialty text for light-green / grey 'AREA' labels dynamically when stacked */
+/* Precise typography downscaling for words like 'AREA' */
+.token.light-green,
+.token.grey {
+  font-size: 7px;
+}
+
+/* Scale down even further when tokens are multiple-stacked inside one grid cell */
 .cell:has(.token:nth-child(2)) .token.light-green,
 .cell:has(.token:nth-child(2)) .token.grey {
   font-size: 5px;
@@ -321,14 +325,13 @@ body {
    ========================================================================== */
 .guide-panel {
   width: 260px;
-  height: 275px; 
+  height: 380px; /* Expanded height to effortlessly fit all 12 buttons together */
   background-color: #222222;
   border-radius: 6px;
   overflow: hidden;
   box-shadow: 0 4px 10px rgba(0,0,0,0.5);
   display: flex;
   flex-direction: column;
-  font-family: sans-serif;
 }
 
 .guide-header {
@@ -419,17 +422,6 @@ body {
   filter: grayscale(100%) brightness(35%) !important;
   border: 1px dashed #555555 !important;
   box-sizing: border-box;
-}
-
-/* Structural visibility configurations mapping the variants */
-.guide-panel.attack .d-light,
-.guide-panel.attack .d-dark {
-  display: none !important;
-}
-
-.guide-panel:not(.attack) .a-red,
-.guide-panel:not(.attack) .a-orange {
-  display: none !important;
 }
 
 /* ==========================================================================

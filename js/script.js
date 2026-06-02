@@ -286,7 +286,7 @@ window.addEventListener('load', function() {
     { color: 'grey',        label: 'X' },
     { color: 'light-green', label: 'AREA' },
     { color: 'grey',        label: 'AREA' },
-    { color: 'blank-slot',  label: '' }
+    null // 10th slot is completely empty with no selectable token inside
   ];
 
   if (supplyGrid) {
