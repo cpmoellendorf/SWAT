@@ -3,9 +3,9 @@ window.addEventListener('load', function() {
   // ==========================================================================
   // GLOBALS
   // ==========================================================================
-  const letters = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O'];
+  const letters = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N'];
   const board = document.getElementById('game-board');
-  const columns = 16;
+  const columns = 5;
   const rows = 11;
   const totalCells = columns * rows;
 
