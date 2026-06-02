@@ -37,6 +37,19 @@ window.addEventListener('load', function() {
     });
   }
 
+  // Helper helper to swap the Copy Link button with a Start New Game button for Host
+  function transformToStartNewGameButton() {
+    if (copyBtn) {
+      copyBtn.innerText = "🔄 Start New Game";
+      // Change behavior to redirect to the original deployed baseline
+      copyBtn.onclick = function() {
+        window.location.href = "https://cpmoellendorf.github.io/SWAT/";
+      };
+      // Ensure it remains perfectly visible
+      copyBtn.style.display = 'inline-block';
+    }
+  }
+
   try {
     peer = new Peer();
 
@@ -46,7 +59,7 @@ window.addEventListener('load', function() {
         window.location.hash = id;
         statusText.innerText = "Ready! Copy link and send to Player 2.";
         if (guideCard) guideCard.classList.remove('attack');
-        if (copyBtn) copyBtn.style.display = 'inline-block'; // Ensure it's visible to host
+        if (copyBtn) copyBtn.style.display = 'inline-block'; 
       } else {
         // Guest side (Player 2 = Attack)
         if (guideCard) {
@@ -55,7 +68,7 @@ window.addEventListener('load', function() {
           if (header) header.innerText = "ATTACK";
         }
         
-        // REMOVE / HIDE COPY LINK BUTTON FOR THE ATTACKER (GUEST)
+        // Remove copy link button completely for the attacker
         if (copyBtn) {
           copyBtn.style.display = 'none';
         }
@@ -68,6 +81,9 @@ window.addEventListener('load', function() {
       connection = conn;
       setupConnectionListeners();
       statusText.innerText = "🟢 Player 2 Connected! Game Live.";
+      
+      // GUEST CONNECTED: Transform Host button into "Start New Game" button
+      transformToStartNewGameButton();
     });
 
     peer.on('error', (err) => {
@@ -87,16 +103,16 @@ window.addEventListener('load', function() {
   }
 
   // ==========================================================================
-  // SHARE LINK
+  // SHARE LINK (Initial Baseline)
   // ==========================================================================
   if (copyBtn) {
-    copyBtn.addEventListener('click', () => {
+    copyBtn.onclick = function() {
       navigator.clipboard.writeText(window.location.href).then(() => {
         const oldText = statusText.innerText;
         statusText.innerText = "📋 Link Copied to Clipboard!";
         setTimeout(() => { statusText.innerText = oldText; }, 3000);
       });
-    });
+    };
   }
 
   // ==========================================================================
@@ -115,14 +131,12 @@ window.addEventListener('load', function() {
 
       // Handle Cross-Map Transfer
       if (data.isCrossMapTransfer) {
-        // 1. Remote clean up from the source map
         const sourceMap = data.sourceIsMiniMap ? miniMap : board;
         const oldCell = sourceMap.querySelector(`.cell[data-x="${data.oldX}"][data-y="${data.oldY}"]`);
         if (oldCell && oldCell.children[data.tokenIndex]) {
           oldCell.children[data.tokenIndex].remove();
         }
 
-        // 2. Instantiate onto the destination map ONLY if it lands on the shared mini-map.
         if (data.isMiniMap) {
           const targetCell = miniMap.querySelector(`.cell[data-x="${data.x}"][data-y="${data.y}"]`);
           if (targetCell) {
@@ -219,7 +233,6 @@ window.addEventListener('load', function() {
       const colorClass = Array.from(draggedToken.classList).find(c => c !== 'token' && c !== 'dragging') || '';
       const textLabel = draggedToken.innerText;
 
-      // Case A: Fresh deployment from the Supply Depot
       if (isSupplyToken) {
         const tokenClone = draggedToken.cloneNode(true);
         tokenClone.classList.remove('dragging');
@@ -229,13 +242,10 @@ window.addEventListener('load', function() {
 
         if (isMiniMapBoard) {
           sendNetworkData({ isMiniMap: true, isNew: true, color: colorClass, textLabel: textLabel, x: gameX, y: gameY });
-          console.log(`Shared Mini-Map updated: Added token [${textLabel}] at ${letters[gameX]}${gameY + 1}.`);
         } else {
           sendNetworkData({ isNew: true, color: colorClass, textLabel: textLabel, x: gameX, y: gameY });
-          console.log(`You placed a token [${textLabel}] at ${letters[gameX]}${gameY + 1}.`);
         }
       } 
-      // Case B: Moving an already existing map token
       else {
         const oldX = parseInt(draggedToken.parentElement.dataset.x);
         const oldY = parseInt(draggedToken.parentElement.dataset.y);
@@ -257,15 +267,11 @@ window.addEventListener('load', function() {
             x: gameX,
             y: gameY
           });
-          console.log(`Cross-map shift! Token transferred to ${isMiniMapBoard ? 'Shared Mini-Map' : 'Main Board'} at ${letters[gameX]}${gameY + 1}.`);
         } else {
-          // Standard intra-map shift rules
           if (isMiniMapBoard) {
             sendNetworkData({ isMiniMap: true, isNew: false, color: colorClass, textLabel: textLabel, oldX: oldX, oldY: oldY, x: gameX, y: gameY });
-            console.log(`Shared Mini-Map updated: Moved token to ${letters[gameX]}${gameY + 1}.`);
           } else {
             sendNetworkData({ isNew: false, oldX: oldX, oldY: oldY, x: gameX, y: gameY });
-            console.log(`You moved your token to ${letters[gameX]}${gameY + 1}.`);
           }
         }
       }
@@ -273,7 +279,7 @@ window.addEventListener('load', function() {
   }
 
   // ==========================================================================
-  // GRID GENERATORS (Simultaneous Twin Build)
+  // GRID GENERATORS
   // ==========================================================================
   if (board && miniMap) {
     for (let i = 0; i < totalCells; i++) {
@@ -296,7 +302,6 @@ window.addEventListener('load', function() {
         miniCellOrLabel.dataset.x = gameX;
         miniCellOrLabel.dataset.y = gameY;
 
-        // Visual Wall Tests
         if (gameX === 0 && gameY === 0) {
           mainCellOrLabel.setAttribute('data-wall-bottom', 'true');
           miniCellOrLabel.setAttribute('data-wall-bottom', 'true');
