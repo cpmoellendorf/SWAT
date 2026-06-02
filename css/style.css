@@ -39,7 +39,7 @@ body {
 
 #mini-map {
   display: grid;
-  grid-template-columns: repeat(16, 1fr);
+  grid-template-columns: repeat(15, 1fr);
   grid-template-rows: repeat(11, 1fr);
   width: 100%;
   aspect-ratio: 16 / 11;
