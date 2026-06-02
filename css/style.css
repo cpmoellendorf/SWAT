@@ -157,23 +157,25 @@ body {
 .cell[data-wall-right="true"]::after {
   content: "";
   position: absolute;
-  top: -2px;               /* Reaches up into the corner grid intersection */
-  right: -2px;             /* Shifts right, perfectly centering over the 2px gap */
-  width: 2px;              /* Fills the grid line width perfectly */
-  height: calc(100% + 4px);/* Spans full cell height plus top & bottom gaps for seamless corners */
+  top: -2px;               
+  right: -2px;             
+  width: 2px;              
+  height: calc(100% + 4px);
   background-color: #000000;
   z-index: 10;
+  pointer-events: none;    /* Fixes drag and drop: lets mouse events pass through to the cell */
 }
 
 .cell[data-wall-bottom="true"]::before {
   content: "";
   position: absolute;
-  left: -2px;              /* Reaches left into the corner grid intersection */
-  bottom: -2px;            /* Shifts down, perfectly centering over the 2px gap */
-  height: 2px;             /* Fills the grid line width perfectly */
-  width: calc(100% + 4px); /* Spans full cell width plus left & right gaps for seamless corners */
+  left: -2px;              
+  bottom: -2px;            
+  height: 2px;             
+  width: calc(100% + 4px); 
   background-color: #000000;
   z-index: 10;
+  pointer-events: none;    /* Fixes drag and drop: lets mouse events pass through to the cell */
 }
 
 /* ==========================================================================
@@ -188,6 +190,7 @@ body {
   height: calc(100% + 4px);
   border-right: 2px dashed #8B4513;
   z-index: 15;
+  pointer-events: none;    /* Fixes drag and drop: lets mouse events pass through to the cell */
 }
 
 .cell[data-window-bottom="true"]::before {
@@ -199,6 +202,7 @@ body {
   width: calc(100% + 4px);
   border-bottom: 2px dashed #8B4513;
   z-index: 15;
+  pointer-events: none;    /* Fixes drag and drop: lets mouse events pass through to the cell */
 }
 
 /* ==========================================================================
