@@ -387,13 +387,13 @@ body {
   font-weight: bold;
 }
 
-/* Action Bar Color Layout Specifications */
+/* Action Bar Setup for layout variations */
 .action-bar.d-light { background-color: #00b4d8; opacity: 0.6; }
 .action-bar.d-dark  { background-color: #070bce; }
 .action-bar.a-red   { background-color: #d90429; }
 .action-bar.a-orange{ background-color: #f77f00; }
 
-/* Structural state visibility configurations */
+/* Structural visibility configurations mapping the variants */
 .guide-panel.attack .d-light,
 .guide-panel.attack .d-dark {
   display: none !important;
@@ -503,7 +503,7 @@ window.addEventListener('load', function() {
   const guideCard = document.querySelector('.guide-panel');
 
   // ==========================================================================
-  // PEER-TO-P2P MULTIPLAYER ENGINE (With Auto-Retry)
+  // PEER-TO-PEER MULTIPLAYER ENGINE (With Auto-Retry)
   // ==========================================================================
   let retryCount = 0;
   const maxRetries = 5;
@@ -523,10 +523,12 @@ window.addEventListener('load', function() {
 
     peer.on('open', (id) => {
       if (!targetPeerId) {
+        // Host side (Player 1 = Defense)
         window.location.hash = id;
         statusText.innerText = "Ready! Copy link and send to Player 2.";
         if (guideCard) guideCard.classList.remove('attack');
       } else {
+        // Guest side (Player 2 = Attack)
         if (guideCard) {
           guideCard.classList.add('attack');
           guideCard.querySelector('.guide-header').innerText = "ATTACK";
