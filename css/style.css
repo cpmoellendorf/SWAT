@@ -69,6 +69,7 @@ body {
   height: 12px;
   max-width: 12px;
   max-height: 12px;
+  font-size: 5px;
 }
 
 #mini-map .cell:has(.token:nth-child(2)) .token {
@@ -77,6 +78,7 @@ body {
   height: 8px;
   max-width: 8px;
   max-height: 8px;
+  font-size: 0px; /* Hide text label on tiny layout stacks */
 }
 
 /* ==========================================================================
@@ -184,7 +186,7 @@ body {
    ========================================================================== */
 .token {
   border-radius: 50%;
-  background-color: #21781e;
+  background-color: #1b4d18; /* Muted base green backup */
   z-index: 5;
   user-select: none;
   cursor: grab;
@@ -195,6 +197,15 @@ body {
   height: 26px;
   max-width: 26px;
   max-height: 26px;
+  
+  /* Text Formatting Alignment Rules */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: sans-serif;
+  font-weight: bold;
+  font-size: 11px;
+  color: #ffffff;
 }
 
 .cell:has(.token:nth-child(2)) .token {
@@ -203,6 +214,7 @@ body {
   height: 16px;
   max-width: 16px;
   max-height: 16px;
+  font-size: 8px;
 }
 
 .cell:has(.token:nth-child(3)) .token {
@@ -211,15 +223,27 @@ body {
   height: 11px;
   max-width: 11px;
   max-height: 11px;
+  font-size: 0px; /* Collapse text overflow on triple stacked grids */
 }
 
-.token * { pointer-events: none; }
-.token   { pointer-events: auto; }
+/* Token Colors */
+.token.light-blue  { background-color: #00b4d8; color: #1a1a1a; }
+.token.dark-blue   { background-color: #070bce; color: #ffffff; }
+.token.orange      { background-color: #f77f00; color: #ffffff; }
+.token.red         { background-color: #d90429; color: #ffffff; }
+.token.dark-green  { background-color: #1b4d18; color: #ffffff; }
 
-.token.light-blue { background-color: #00b4d8; }
-.token.dark-blue  { background-color: #070bce; }
-.token.pink       { background-color: #ff85a1; }
-.token.red        { background-color: #d90429; }
+/* Custom Specialty Label Tokens */
+.token.black       { background-color: #000000; color: #ffffff; }
+.token.grey        { background-color: #666666; color: #ffffff; }
+.token.light-green { background-color: #70e000; color: #1a1a1a; font-size: 7px; }
+.token.blank-slot   { background-color: #ffffff; border: 1px solid #999999; box-sizing: border-box; }
+
+/* Shrink specialty text for light-green / grey 'AREA' labels dynamically when stacked */
+.cell:has(.token:nth-child(2)) .token.light-green,
+.cell:has(.token:nth-child(2)) .token.grey {
+  font-size: 5px;
+}
 
 .token:active   { cursor: grabbing; }
 .token.dragging { opacity: 0.4; }
@@ -331,7 +355,7 @@ body {
 }
 
 .guide-column.left-info {
-  flex: 1.2; /* Explicit flexible proportion layout */
+  flex: 1.2;
 }
 
 .guide-column.left-info ul {
@@ -355,7 +379,7 @@ body {
 }
 
 .guide-column.right-bars {
-  flex: 1; /* Explicit column isolation */
+  flex: 1;
   justify-content: flex-start;
   gap: 6px;
   padding-top: 4px;

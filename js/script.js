@@ -113,6 +113,7 @@ window.addEventListener('load', function() {
         if (data.isNew) {
           const remoteToken = document.createElement('div');
           remoteToken.className = `token ${data.color}`;
+          remoteToken.innerText = data.textLabel || '';
           remoteToken.setAttribute('draggable', 'true');
           bindTokenDragEvents(remoteToken, false);
           targetCell.appendChild(remoteToken);
@@ -134,7 +135,7 @@ window.addEventListener('load', function() {
       }
 
       if (data.isNew) {
-        console.log(`📡 RADAR ALERT: Opponent instantiated a token on THEIR board at ${opponentLetter}${opponentNumber}.`);
+        console.log(`📡 RADAR ALERT: Opponent instantiated a token [${data.textLabel || 'Blank'}] on THEIR board at ${opponentLetter}${opponentNumber}.`);
       } else if (data.isDelete) {
         console.log(`📡 RADAR ALERT: Opponent deleted a token on THEIR board at ${letters[data.oldX]}${data.oldY + 1}.`);
       } else {
@@ -186,6 +187,7 @@ window.addEventListener('load', function() {
       if (!isSupplyToken && (sourceIsMiniMap !== isMiniMapBoard)) return;
 
       const colorClass = Array.from(draggedToken.classList).find(c => c !== 'token' && c !== 'dragging') || '';
+      const textLabel = draggedToken.innerText;
 
       if (isSupplyToken) {
         const tokenClone = draggedToken.cloneNode(true);
@@ -195,11 +197,11 @@ window.addEventListener('load', function() {
         cell.appendChild(tokenClone);
 
         if (isMiniMapBoard) {
-          sendNetworkData({ isMiniMap: true, isNew: true, color: colorClass, x: gameX, y: gameY });
-          console.log(`Shared Mini-Map updated: Added token at ${letters[gameX]}${gameY + 1}.`);
+          sendNetworkData({ isMiniMap: true, isNew: true, color: colorClass, textLabel: textLabel, x: gameX, y: gameY });
+          console.log(`Shared Mini-Map updated: Added token [${textLabel}] at ${letters[gameX]}${gameY + 1}.`);
         } else {
-          sendNetworkData({ isNew: true, color: colorClass, x: gameX, y: gameY });
-          console.log(`You placed a token at ${letters[gameX]}${gameY + 1}.`);
+          sendNetworkData({ isNew: true, color: colorClass, textLabel: textLabel, x: gameX, y: gameY });
+          console.log(`You placed a token [${textLabel}] at ${letters[gameX]}${gameY + 1}.`);
         }
       } else {
         const oldX = parseInt(draggedToken.parentElement.dataset.x);
@@ -208,7 +210,7 @@ window.addEventListener('load', function() {
         cell.appendChild(draggedToken);
 
         if (isMiniMapBoard) {
-          sendNetworkData({ isMiniMap: true, isNew: false, color: colorClass, oldX: oldX, oldY: oldY, x: gameX, y: gameY });
+          sendNetworkData({ isMiniMap: true, isNew: false, color: colorClass, textLabel: textLabel, oldX: oldX, oldY: oldY, x: gameX, y: gameY });
           console.log(`Shared Mini-Map updated: Moved token to ${letters[gameX]}${gameY + 1}.`);
         } else {
           sendNetworkData({ isNew: false, oldX: oldX, oldY: oldY, x: gameX, y: gameY });
@@ -272,17 +274,34 @@ window.addEventListener('load', function() {
   // ==========================================================================
   const supplyGrid = document.getElementById('supply-grid');
   const trashBin = document.getElementById('trash-bin');
-  const supplyItems = ['', 'light-blue', 'dark-blue', 'pink', 'red', '', '', '', '', ''];
+  
+  // Custom definitions array storing color classes and character typography strings
+  const customSupplyItems = [
+    { color: 'light-blue',  label: '' },
+    { color: 'dark-blue',   label: '' },
+    { color: 'orange',      label: '' },
+    { color: 'red',         label: '' },
+    { color: 'dark-green',  label: '' },
+    { color: 'black',       label: 'D' },
+    { color: 'grey',        label: 'X' },
+    { color: 'light-green', label: 'AREA' },
+    { color: 'grey',        label: 'AREA' },
+    { color: 'blank-slot',  label: '' }
+  ];
 
   if (supplyGrid) {
     for (let i = 0; i < 10; i++) {
       const slot = document.createElement('div');
       slot.classList.add('supply-slot');
-      if (supplyItems[i] !== undefined) {
+      
+      const config = customSupplyItems[i];
+      if (config) {
         const supplyToken = document.createElement('div');
         supplyToken.classList.add('token');
+        if (config.color) supplyToken.classList.add(config.color);
+        supplyToken.innerText = config.label;
         supplyToken.setAttribute('draggable', 'true');
-        if (supplyItems[i]) supplyToken.classList.add(supplyItems[i]);
+        
         bindTokenDragEvents(supplyToken, true);
         slot.appendChild(supplyToken);
       }
@@ -320,7 +339,6 @@ window.addEventListener('load', function() {
   // ==========================================================================
   if (guideCard) {
     guideCard.addEventListener('click', function(event) {
-      // Find nearest action bar element clicked inside the guide container
       const bar = event.target.closest('.action-bar');
       if (bar) {
         bar.classList.toggle('muted');
