@@ -166,23 +166,21 @@ window.addEventListener('load', function() {
     });
   }
 
-  // ==========================================================================
+// ==========================================================================
   // GRID CELL EVENT CONFIGURATION
   // ==========================================================================
   function configureGridCellEvents(cell, gameX, gameY, isMiniMapBoard) {
     cell.addEventListener('dragover', function(event) {
       event.preventDefault();
-      const isIllegalZone = cell.matches('[data-wall-right="true"], [data-wall-bottom="true"], [data-window-right="true"], [data-window-bottom="true"]');
-      event.dataTransfer.dropEffect = isIllegalZone ? 'none' : 'move';
+      // REMOVED the illegal zone check so cells with borders can still accept token drop events
+      event.dataTransfer.dropEffect = 'move';
     });
 
     cell.addEventListener('drop', function(event) {
       event.preventDefault();
       if (!draggedToken) return;
 
-      const isWallOrWindow = cell.matches('[data-wall-right="true"], [data-wall-bottom="true"], [data-window-right="true"], [data-window-bottom="true"]');
-      if (isWallOrWindow) return;
-
+      // REMOVED the wall/window check here as well to allow placements
       const sourceIsMiniMap = !!draggedToken.parentElement.closest('#mini-map');
       if (!isSupplyToken && (sourceIsMiniMap !== isMiniMapBoard)) return;
 
@@ -219,7 +217,6 @@ window.addEventListener('load', function() {
       }
     });
   }
-
   // ==========================================================================
   // GRID GENERATORS (Simultaneous Twin Build)
   // ==========================================================================
