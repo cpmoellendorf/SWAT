@@ -200,15 +200,15 @@ body {
 }
 
 /* ==========================================================================
-   WALLS
+   WALLS (Universal Grid Compatibility)
    ========================================================================== */
 .cell[data-wall-right="true"]::after {
   content: "";
   position: absolute;
-  top: -2px;
-  right: -2px;
-  width: 2px;
-  height: calc(100% + 4px);
+  top: 0;
+  right: 0;                /* Pulled from -2px to 0 so it stays inside cell bounds */
+  width: 4px;              /* Slightly thickened to ensure high visibility over gaps */
+  height: 100%;
   background-color: #000000;
   z-index: 10;
 }
@@ -216,36 +216,36 @@ body {
 .cell[data-wall-bottom="true"]::before {
   content: "";
   position: absolute;
-  left: -2px;
-  bottom: -2px;
-  height: 2px;
-  width: calc(100% + 4px);
+  left: 0;
+  bottom: 0;               /* Pulled from -2px to 0 so it stays inside cell bounds */
+  height: 4px;             /* Slightly thickened to ensure high visibility over gaps */
+  width: 100%;
   background-color: #000000;
   z-index: 10;
 }
 
 /* ==========================================================================
-   WINDOWS
+   WINDOWS (Universal Grid Compatibility)
    ========================================================================== */
 .cell[data-window-right="true"]::after {
   content: "";
   position: absolute;
-  top: -2px;
-  right: -2px;
-  width: 2px;
-  height: calc(100% + 4px);
-  border-right: 2px dashed #8B4513;
+  top: 0;
+  right: 0;                /* Pulled inside cell bounds */
+  width: 4px;
+  height: 100%;
+  border-right: 4px dashed #8B4513;
   z-index: 15;
 }
 
 .cell[data-window-bottom="true"]::before {
   content: "";
   position: absolute;
-  left: -2px;
-  bottom: -2px;
-  height: 2px;
-  width: calc(100% + 4px);
-  border-bottom: 2px dashed #8B4513;
+  left: 0;
+  bottom: 0;               /* Pulled inside cell bounds */
+  height: 4px;
+  width: 100%;
+  border-bottom: 4px dashed #8B4513;
   z-index: 15;
 }
 
