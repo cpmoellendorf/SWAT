@@ -451,8 +451,8 @@ body {
    ========================================================================== */
 
 /* 1. DEFAULT STATE (DEFENSE): Hide attack bars, ensure defense bars are visible */
-.guide-panel .a-red,
-.guide-panel .a-orange {
+.guide-panel .a-orange,
+.guide-panel .a-red {
   display: none !important;
 }
 .guide-panel .d-light,
@@ -465,8 +465,8 @@ body {
 .guide-panel.attack .d-dark {
   display: none !important;
 }
-.guide-panel.attack .a-red,
-.guide-panel.attack .a-orange {
+.guide-panel.attack .a-orange,
+.guide-panel.attack .a-red {
   display: block !important;
 }
 
