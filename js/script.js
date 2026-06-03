@@ -34,20 +34,17 @@ window.addEventListener('load', function() {
     connection.on('open', () => {
       setupConnectionListeners();
       statusText.innerText = "🟢 Connected to Host! Game Live.";
-      
-      // GUEST LIVE: Transform the guest's hidden copy link button into a "Start New Game" button
       transformToStartNewGameButton();
     });
   }
 
-  // Shared Helper to swap the button text and redirect link for whichever client is live
   function transformToStartNewGameButton() {
     if (copyBtn) {
       copyBtn.innerText = "🔄 Start New Game";
       copyBtn.onclick = function() {
         window.location.href = "https://cpmoellendorf.github.io/SWAT/";
       };
-      copyBtn.style.display = 'inline-block'; // Explicitly show it on both sides
+      copyBtn.style.display = 'inline-block'; 
     }
   }
 
@@ -56,24 +53,17 @@ window.addEventListener('load', function() {
 
     peer.on('open', (id) => {
       if (!targetPeerId) {
-        // Host side (Player 1 = Defense)
         window.location.hash = id;
         statusText.innerText = "Ready! Copy link and send to Player 2.";
         if (guideCard) guideCard.classList.remove('attack');
         if (copyBtn) copyBtn.style.display = 'inline-block'; 
       } else {
-        // Guest side (Player 2 = Attack)
         if (guideCard) {
           guideCard.classList.add('attack');
           const header = guideCard.querySelector('.guide-header');
           if (header) header.innerText = "ATTACK";
         }
-        
-        // Hide it initially while connecting, it will pop back up as 'Start New Game' on open
-        if (copyBtn) {
-          copyBtn.style.display = 'none';
-        }
-        
+        if (copyBtn) copyBtn.style.display = 'none';
         connectToHost();
       }
     });
@@ -82,8 +72,6 @@ window.addEventListener('load', function() {
       connection = conn;
       setupConnectionListeners();
       statusText.innerText = "🟢 Player 2 Connected! Game Live.";
-      
-      // HOST LIVE: Transform Host button into "Start New Game" button
       transformToStartNewGameButton();
     });
 
@@ -103,9 +91,6 @@ window.addEventListener('load', function() {
     statusText.innerText = "⚠️ Network initialization failed.";
   }
 
-  // ==========================================================================
-  // SHARE LINK (Initial Baseline Setup for Host Only)
-  // ==========================================================================
   if (copyBtn) {
     copyBtn.onclick = function() {
       navigator.clipboard.writeText(window.location.href).then(() => {
@@ -139,19 +124,20 @@ window.addEventListener('load', function() {
         return;
       }
 
-      const opponentLetter = letters[data.x];
-      const opponentNumber = data.y + 1;
+      const opponentLetter = letters[data.x - 1] || `#${data.x}`;
+      const opponentNumber = data.y;
 
       // Handle Cross-Map Transfer
       if (data.isCrossMapTransfer) {
         const sourceMap = data.sourceIsMiniMap ? miniMap : board;
-        const oldCell = sourceMap.querySelector(`.cell[data-x="${data.oldX}"][data-y="${data.oldY}"]`);
+        // Search globally by dataset (allows finding labels and cells)
+        const oldCell = sourceMap.querySelector(`[data-x="${data.oldX}"][data-y="${data.oldY}"]`);
         if (oldCell && oldCell.children[data.tokenIndex]) {
           oldCell.children[data.tokenIndex].remove();
         }
 
         if (data.isMiniMap) {
-          const targetCell = miniMap.querySelector(`.cell[data-x="${data.x}"][data-y="${data.y}"]`);
+          const targetCell = miniMap.querySelector(`[data-x="${data.x}"][data-y="${data.y}"]`);
           if (targetCell) {
             const remoteToken = document.createElement('div');
             remoteToken.className = `token ${data.color}`;
@@ -160,16 +146,12 @@ window.addEventListener('load', function() {
             bindTokenDragEvents(remoteToken, false);
             targetCell.appendChild(remoteToken);
           }
-          console.log(`📡 RADAR ALERT: Opponent moved a token onto the Shared Mini-Map at ${opponentLetter}${opponentNumber}.`);
-        } else {
-          console.log(`📡 RADAR ALERT: Opponent pulled a token off the Shared Mini-Map into their private view.`);
         }
         return;
       }
 
-      // Handle standard Mini-Map mutations
       if (data.isMiniMap) {
-        const targetCell = miniMap.querySelector(`.cell[data-x="${data.x}"][data-y="${data.y}"]`);
+        const targetCell = miniMap.querySelector(`[data-x="${data.x}"][data-y="${data.y}"]`);
         if (!targetCell) return;
 
         if (data.isNew) {
@@ -180,12 +162,12 @@ window.addEventListener('load', function() {
           bindTokenDragEvents(remoteToken, false);
           targetCell.appendChild(remoteToken);
         } else if (data.isDelete) {
-          const oldCell = miniMap.querySelector(`.cell[data-x="${data.oldX}"][data-y="${data.oldY}"]`);
+          const oldCell = miniMap.querySelector(`[data-x="${data.oldX}"][data-y="${data.oldY}"]`);
           if (oldCell && oldCell.children[data.tokenIndex]) {
             oldCell.children[data.tokenIndex].remove();
           }
         } else {
-          const oldCell = miniMap.querySelector(`.cell[data-x="${data.oldX}"][data-y="${data.oldY}"]`);
+          const oldCell = miniMap.querySelector(`[data-x="${data.oldX}"][data-y="${data.oldY}"]`);
           if (oldCell) {
             const tokenToMove = Array.from(oldCell.children).find(child => child.classList.contains(data.color || 'token'));
             if (tokenToMove) {
@@ -194,15 +176,6 @@ window.addEventListener('load', function() {
           }
         }
         return;
-      }
-
-      // Handle standard Main Board mutations
-      if (data.isNew) {
-        console.log(`📡 RADAR ALERT: Opponent instantiated a token [${data.textLabel || 'Blank'}] on THEIR board at ${opponentLetter}${opponentNumber}.`);
-      } else if (data.isDelete) {
-        console.log(`📡 RADAR ALERT: Opponent deleted a token on THEIR board at ${letters[data.oldX]}${data.oldY + 1}.`);
-      } else {
-        console.log(`📡 RADAR ALERT: Opponent shifted a piece on THEIR map from ${letters[data.oldX]}${data.oldY + 1} to ${opponentLetter}${opponentNumber}.`);
       }
     });
 
@@ -306,125 +279,52 @@ window.addEventListener('load', function() {
       const mainCellOrLabel = (row === 0 || col === 0 || row === 10 || col === 13) ? createDiv('label', labelText) : createDiv('cell', '');
       const miniCellOrLabel = (row === 0 || col === 0 || row === 10 || col === 13) ? createDiv('label', labelText) : createDiv('cell', '');
 
-      if (row !== 0 && col !== 0) {
+      // ALWAYS configure coordinates + events so tokens can drop everywhere (even labels)
+      mainCellOrLabel.dataset.x = col;
+      mainCellOrLabel.dataset.y = row;
+      miniCellOrLabel.dataset.x = col;
+      miniCellOrLabel.dataset.y = row;
+
+      configureGridCellEvents(mainCellOrLabel, col, row, false);
+      configureGridCellEvents(miniCellOrLabel, col, row, true);
+
+      // ONLY apply walls/windows constraints to actual map borders
+      if (row !== 0 && col !== 0 && row !== 10 && col !== 13) {
         const gameX = col - 1;
         const gameY = row - 1;
         
-        mainCellOrLabel.dataset.x = gameX;
-        mainCellOrLabel.dataset.y = gameY;
-        miniCellOrLabel.dataset.x = gameX;
-        miniCellOrLabel.dataset.y = gameY;
-
-      // ==========================================================================
-      // MAP GENERATION: Oregon
-      // ==========================================================================
-      // Row 0
-      if (gameX === 7 && gameY === 0) {
-        mainCellOrLabel.setAttribute('data-window-top', 'true');
-        miniCellOrLabel.setAttribute('data-window-top', 'true');
-      }
-      if (gameX > 7 && gameX <= 10 && gameY === 0) {
-        mainCellOrLabel.setAttribute('data-wall-top', 'true');
-        miniCellOrLabel.setAttribute('data-wall-top', 'true');
-      }
-      if (gameX === 6 && gameY === 0) {
-        mainCellOrLabel.setAttribute('data-wall-right', 'true');
-        miniCellOrLabel.setAttribute('data-wall-right', 'true');
-      }
-      if (gameX === 1 && gameY === 0) {
-        mainCellOrLabel.setAttribute('data-wall-bottom', 'true');
-        miniCellOrLabel.setAttribute('data-wall-bottom', 'true');
-      } 
-      if (gameX >= 4 && gameX <= 6 && gameY === 0) {
-        mainCellOrLabel.setAttribute('data-wall-bottom', 'true');
-        miniCellOrLabel.setAttribute('data-wall-bottom', 'true');
-      }      
-      // Row 1
-      if ((gameX === 0 || gameX === 1 || gameX === 2 || gameX === 6 || gameX === 10) && gameY === 1) {
-        mainCellOrLabel.setAttribute('data-wall-right', 'true');
-        miniCellOrLabel.setAttribute('data-wall-right', 'true');
-      }
-      if ((gameX === 1 || gameX === 10) && gameY === 1) {
-        mainCellOrLabel.setAttribute('data-wall-bottom', 'true');
-        miniCellOrLabel.setAttribute('data-wall-bottom', 'true');
-      } 
-      // Row 2
-      if ((gameX === 2 || gameX === 9) && gameY === 2) {
-        mainCellOrLabel.setAttribute('data-wall-right', 'true');
-        miniCellOrLabel.setAttribute('data-wall-right', 'true');
-      }
-      if ((gameX === 1 || gameX === 2 || gameX === 8) && gameY === 2) {
-        mainCellOrLabel.setAttribute('data-wall-bottom', 'true');
-        miniCellOrLabel.setAttribute('data-wall-bottom', 'true');
-      }     
-      // Row 3
-      if ((gameX === 2 || gameX === 6 || gameX === 9) && gameY === 3) {
-        mainCellOrLabel.setAttribute('data-wall-right', 'true');
-        miniCellOrLabel.setAttribute('data-wall-right', 'true');
-      }
-      if (gameX === 0 && gameY === 3) {
-        mainCellOrLabel.setAttribute('data-window-right', 'true');
-        miniCellOrLabel.setAttribute('data-window-right', 'true');
-      }      
-      if ((gameX === 3 || gameX === 4 || gameX === 6 || gameX === 7 || gameX === 9) && gameY === 3) {
-        mainCellOrLabel.setAttribute('data-wall-bottom', 'true');
-        miniCellOrLabel.setAttribute('data-wall-bottom', 'true');
-      }
-      if ((gameX === 10) && gameY === 3) {
-        mainCellOrLabel.setAttribute('data-window-bottom', 'true');
-        miniCellOrLabel.setAttribute('data-window-bottom', 'true');
-      }
-      // Row 4
-      if ((gameX === 0 || gameX === 9 || gameX === 11) && gameY === 4) {
-        mainCellOrLabel.setAttribute('data-wall-right', 'true');
-        miniCellOrLabel.setAttribute('data-wall-right', 'true');
-      }
-      if ((gameX === 2 || gameX === 3 || gameX === 6) && gameY === 4) {
-        mainCellOrLabel.setAttribute('data-wall-bottom', 'true');
-        miniCellOrLabel.setAttribute('data-wall-bottom', 'true');
-      }
-      // Row 5
-      if ((gameX === 2 || gameX === 6 || gameX === 11) && gameY === 5) {
-        mainCellOrLabel.setAttribute('data-wall-right', 'true');
-        miniCellOrLabel.setAttribute('data-wall-right', 'true');
-      }
-      if (gameX === 10 && gameY === 5) {
-        mainCellOrLabel.setAttribute('data-wall-bottom', 'true');
-        miniCellOrLabel.setAttribute('data-wall-bottom', 'true');
-      }
-      // Row 6
-      if ((gameX === 2 || gameX === 6 || gameX === 9) && gameY === 6) {
-        mainCellOrLabel.setAttribute('data-wall-right', 'true');
-        miniCellOrLabel.setAttribute('data-wall-right', 'true');
-      }
-      if ((gameX === 0 || gameX === 7 || gameX === 9) && gameY === 6) {
-        mainCellOrLabel.setAttribute('data-wall-bottom', 'true');
-        miniCellOrLabel.setAttribute('data-wall-bottom', 'true');
-      }
-      // Row 7
-      if ((gameX === 0 || gameX === 2 || gameX === 4 || gameX === 6) && gameY === 7) {
-        mainCellOrLabel.setAttribute('data-wall-right', 'true');
-        miniCellOrLabel.setAttribute('data-wall-right', 'true');
-      }
-      if ((gameX === 0  || gameX === 4 || gameX === 5) && gameY === 7) {
-        mainCellOrLabel.setAttribute('data-wall-bottom', 'true');
-        miniCellOrLabel.setAttribute('data-wall-bottom', 'true');
-      }
-      if ((gameX === 3  || gameX === 6) && gameY === 7) {
-        mainCellOrLabel.setAttribute('data-window-bottom', 'true');
-        miniCellOrLabel.setAttribute('data-window-bottom', 'true');
-      }
-      if (gameX === 0 && gameY === 7) {
-        mainCellOrLabel.setAttribute('data-wall-left', 'true');
-        miniCellOrLabel.setAttribute('data-wall-left', 'true');
-      }
-      if (gameX === 0 && gameY === 8) {
-        mainCellOrLabel.setAttribute('data-wall-top', 'true');
-        miniCellOrLabel.setAttribute('data-wall-top', 'true');        
-      }            
-
-        configureGridCellEvents(mainCellOrLabel, gameX, gameY, false);
-        configureGridCellEvents(miniCellOrLabel, gameX, gameY, true);
+        // Row 0
+        if (gameX === 7 && gameY === 0) { mainCellOrLabel.setAttribute('data-window-top', 'true'); miniCellOrLabel.setAttribute('data-window-top', 'true'); }
+        if (gameX > 7 && gameX <= 10 && gameY === 0) { mainCellOrLabel.setAttribute('data-wall-top', 'true'); miniCellOrLabel.setAttribute('data-wall-top', 'true'); }
+        if (gameX === 6 && gameY === 0) { mainCellOrLabel.setAttribute('data-wall-right', 'true'); miniCellOrLabel.setAttribute('data-wall-right', 'true'); }
+        if (gameX === 1 && gameY === 0) { mainCellOrLabel.setAttribute('data-wall-bottom', 'true'); miniCellOrLabel.setAttribute('data-wall-bottom', 'true'); } 
+        if (gameX >= 4 && gameX <= 6 && gameY === 0) { mainCellOrLabel.setAttribute('data-wall-bottom', 'true'); miniCellOrLabel.setAttribute('data-wall-bottom', 'true'); }      
+        // Row 1
+        if ((gameX === 0 || gameX === 1 || gameX === 2 || gameX === 6 || gameX === 10) && gameY === 1) { mainCellOrLabel.setAttribute('data-wall-right', 'true'); miniCellOrLabel.setAttribute('data-wall-right', 'true'); }
+        if ((gameX === 1 || gameX === 10) && gameY === 1) { mainCellOrLabel.setAttribute('data-wall-bottom', 'true'); miniCellOrLabel.setAttribute('data-wall-bottom', 'true'); } 
+        // Row 2
+        if ((gameX === 2 || gameX === 9) && gameY === 2) { mainCellOrLabel.setAttribute('data-wall-right', 'true'); miniCellOrLabel.setAttribute('data-wall-right', 'true'); }
+        if ((gameX === 1 || gameX === 2 || gameX === 8) && gameY === 2) { mainCellOrLabel.setAttribute('data-wall-bottom', 'true'); miniCellOrLabel.setAttribute('data-wall-bottom', 'true'); }     
+        // Row 3
+        if ((gameX === 2 || gameX === 6 || gameX === 9) && gameY === 3) { mainCellOrLabel.setAttribute('data-wall-right', 'true'); miniCellOrLabel.setAttribute('data-wall-right', 'true'); }
+        if (gameX === 0 && gameY === 3) { mainCellOrLabel.setAttribute('data-window-right', 'true'); miniCellOrLabel.setAttribute('data-window-right', 'true'); }      
+        if ((gameX === 3 || gameX === 4 || gameX === 6 || gameX === 7 || gameX === 9) && gameY === 3) { mainCellOrLabel.setAttribute('data-wall-bottom', 'true'); miniCellOrLabel.setAttribute('data-wall-bottom', 'true'); }
+        if ((gameX === 10) && gameY === 3) { mainCellOrLabel.setAttribute('data-window-bottom', 'true'); miniCellOrLabel.setAttribute('data-window-bottom', 'true'); }
+        // Row 4
+        if ((gameX === 0 || gameX === 9 || gameX === 11) && gameY === 4) { mainCellOrLabel.setAttribute('data-wall-right', 'true'); miniCellOrLabel.setAttribute('data-wall-right', 'true'); }
+        if ((gameX === 2 || gameX === 3 || gameX === 6) && gameY === 4) { mainCellOrLabel.setAttribute('data-wall-bottom', 'true'); miniCellOrLabel.setAttribute('data-wall-bottom', 'true'); }
+        // Row 5
+        if ((gameX === 2 || gameX === 6 || gameX === 11) && gameY === 5) { mainCellOrLabel.setAttribute('data-wall-right', 'true'); miniCellOrLabel.setAttribute('data-wall-right', 'true'); }
+        if (gameX === 10 && gameY === 5) { mainCellOrLabel.setAttribute('data-wall-bottom', 'true'); miniCellOrLabel.setAttribute('data-wall-bottom', 'true'); }
+        // Row 6
+        if ((gameX === 2 || gameX === 6 || gameX === 9) && gameY === 6) { mainCellOrLabel.setAttribute('data-wall-right', 'true'); miniCellOrLabel.setAttribute('data-wall-right', 'true'); }
+        if ((gameX === 0 || gameX === 7 || gameX === 9) && gameY === 6) { mainCellOrLabel.setAttribute('data-wall-bottom', 'true'); miniCellOrLabel.setAttribute('data-wall-bottom', 'true'); }
+        // Row 7
+        if ((gameX === 0 || gameX === 2 || gameX === 4 || gameX === 6) && gameY === 7) { mainCellOrLabel.setAttribute('data-wall-right', 'true'); miniCellOrLabel.setAttribute('data-wall-right', 'true'); }
+        if ((gameX === 0  || gameX === 4 || gameX === 5) && gameY === 7) { mainCellOrLabel.setAttribute('data-wall-bottom', 'true'); miniCellOrLabel.setAttribute('data-wall-bottom', 'true'); }
+        if ((gameX === 3  || gameX === 6) && gameY === 7) { mainCellOrLabel.setAttribute('data-window-bottom', 'true'); miniCellOrLabel.setAttribute('data-window-bottom', 'true'); }
+        if (gameX === 0 && gameY === 7) { mainCellOrLabel.setAttribute('data-wall-left', 'true'); miniCellOrLabel.setAttribute('data-wall-left', 'true'); }
+        if (gameX === 0 && gameY === 8) { mainCellOrLabel.setAttribute('data-wall-top', 'true'); miniCellOrLabel.setAttribute('data-wall-top', 'true'); }            
       }
 
       board.appendChild(mainCellOrLabel);
@@ -435,7 +335,15 @@ window.addEventListener('load', function() {
   function createDiv(className, text) {
     const el = document.createElement('div');
     el.className = className;
-    el.innerText = text;
+    // WRAPS static label text in a span so it sits cleanly beneath the tokens
+    if (className === 'label' && text !== '') {
+      const span = document.createElement('span');
+      span.className = 'label-text';
+      span.innerText = text;
+      el.appendChild(span);
+    } else {
+      el.innerText = text;
+    }
     return el;
   }
 
@@ -503,9 +411,6 @@ window.addEventListener('load', function() {
     });
   }
 
-  // ==========================================================================
-  // ROBUST DELEGATED INTERACTIVE TACTICAL GUIDE SHEET
-  // ==========================================================================
   if (guideCard) {
     guideCard.addEventListener('click', function(event) {
       const bar = event.target.closest('.action-bar');
@@ -518,7 +423,7 @@ window.addEventListener('load', function() {
   // ==========================================================================
   // REAL-TIME CHESS CLOCK ENGINE
   // ==========================================================================
-  let defTime = 600; // 10 minutes in seconds
+  let defTime = 600; 
   let offTime = 600; 
   let activeTurn = 'defense'; 
   let isClockRunning = false;
@@ -526,8 +431,8 @@ window.addEventListener('load', function() {
 
   const defClockBox = document.getElementById('defense-clock');
   const offClockBox = document.getElementById('offense-clock');
-  const defTimeDisplay = defClockBox.querySelector('.clock-time');
-  const offTimeDisplay = offClockBox.querySelector('.clock-time');
+  const defTimeDisplay = defClockBox ? defClockBox.querySelector('.clock-time') : null;
+  const offTimeDisplay = offClockBox ? offClockBox.querySelector('.clock-time') : null;
   const playPauseBtn = document.getElementById('play-pause-btn');
   const moveCounterDisplay = document.getElementById('move-counter');
 
@@ -543,7 +448,6 @@ window.addEventListener('load', function() {
     offTimeDisplay.innerText = formatTime(offTime);
     moveCounterDisplay.innerText = `Move: ${currentMove}`;
 
-    // Clear dynamic behavior classes
     defClockBox.className = 'clock-box';
     offClockBox.className = 'clock-box';
 
@@ -621,7 +525,6 @@ window.addEventListener('load', function() {
     });
   }
 
-  // Initializing UI layout
   updateClockUI();
 
 });
