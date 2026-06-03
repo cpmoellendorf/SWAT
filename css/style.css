@@ -36,12 +36,12 @@ body {
 
 #mini-map {
   display: grid;
-  grid-template-columns: repeat(15, 1fr);
+  grid-template-columns: repeat(14, 1fr); /* CHANGED: 15 to 14 columns */
   grid-template-rows: repeat(11, 1fr);
   width: 100%;
-  aspect-ratio: 15 / 11;
-  gap: 2px;                   /* 2px track gaps matching the main board line weight */
-  background-color: #f6f6f6;  /* Light grey line base matching the main board */
+  aspect-ratio: 14 / 11;                  /* CHANGED: 15 / 11 to 14 / 11 */
+  gap: 2px;                   
+  background-color: #f6f6f6;  
 }
 
 #mini-map .cell {
@@ -66,7 +66,7 @@ body {
 }
 
 #mini-map .label {
-  background-color: #222222;
+  background-color: #3a3a3a; /* CHANGED: Darkish gray instead of #222222 */
   color: #ffffff;
   font-weight: bold;
   display: flex;
@@ -103,9 +103,9 @@ body {
    ========================================================================== */
 #game-board {
   display: grid;
-  grid-template-columns: repeat(15, 1fr);
+  grid-template-columns: repeat(14, 1fr); /* CHANGED: 15 to 14 columns */
   grid-template-rows: repeat(11, 1fr);
-  width: 600px;
+  width: 560px;                           /* OPTIONAL: Scaled down slightly from 600px to maintain aspect ratio integrity */
   height: 440px;
   gap: 2px;
   background-color: #f6f6f6;
@@ -135,7 +135,7 @@ body {
 }
 
 .label {
-  background-color: #222222;
+  background-color: #3a3a3a; /* CHANGED: Darkish gray instead of #222222 */
   color: #ffffff;
   font-weight: bold;
   display: flex;
