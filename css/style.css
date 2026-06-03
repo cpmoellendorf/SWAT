@@ -66,7 +66,7 @@ body {
 }
 
 #mini-map .label {
-  background-color: #3a3a3a; /* CHANGED: Darkish gray instead of #222222 */
+  background-color: #ababab; /* CHANGED: Darkish gray instead of #222222 */
   color: #ffffff;
   font-weight: bold;
   display: flex;
@@ -135,7 +135,7 @@ body {
 }
 
 .label {
-  background-color: #3a3a3a; /* CHANGED: Darkish gray instead of #222222 */
+  background-color: #ababab; /* CHANGED: Darkish gray instead of #222222 */
   color: #ffffff;
   font-weight: bold;
   display: flex;
