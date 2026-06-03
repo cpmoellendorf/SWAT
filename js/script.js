@@ -423,8 +423,8 @@ window.addEventListener('load', function() {
   // ==========================================================================
   // REAL-TIME CHESS CLOCK ENGINE
   // ==========================================================================
-  let defTime = 600; 
-  let offTime = 600; 
+  let defTime = 1020; 
+  let offTime = 720; 
   let activeTurn = 'defense'; 
   let isClockRunning = false;
   let currentMove = 1;
