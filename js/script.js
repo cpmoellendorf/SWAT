@@ -34,17 +34,20 @@ window.addEventListener('load', function() {
     connection.on('open', () => {
       setupConnectionListeners();
       statusText.innerText = "🟢 Connected to Host! Game Live.";
+      
+      // GUEST LIVE: Transform the guest's hidden copy link button into a "Start New Game" button
       transformToStartNewGameButton();
     });
   }
 
+  // Shared Helper to swap the button text and redirect link for whichever client is live
   function transformToStartNewGameButton() {
     if (copyBtn) {
       copyBtn.innerText = "🔄 Start New Game";
       copyBtn.onclick = function() {
         window.location.href = "https://cpmoellendorf.github.io/SWAT/";
       };
-      copyBtn.style.display = 'inline-block';
+      copyBtn.style.display = 'inline-block'; // Explicitly show it on both sides
     }
   }
 
@@ -53,17 +56,24 @@ window.addEventListener('load', function() {
 
     peer.on('open', (id) => {
       if (!targetPeerId) {
+        // Host side (Player 1 = Defense)
         window.location.hash = id;
         statusText.innerText = "Ready! Copy link and send to Player 2.";
         if (guideCard) guideCard.classList.remove('attack');
         if (copyBtn) copyBtn.style.display = 'inline-block'; 
       } else {
+        // Guest side (Player 2 = Attack)
         if (guideCard) {
           guideCard.classList.add('attack');
           const header = guideCard.querySelector('.guide-header');
           if (header) header.innerText = "ATTACK";
         }
-        if (copyBtn) copyBtn.style.display = 'none';
+        
+        // Hide it initially while connecting, it will pop back up as 'Start New Game' on open
+        if (copyBtn) {
+          copyBtn.style.display = 'none';
+        }
+        
         connectToHost();
       }
     });
@@ -72,6 +82,8 @@ window.addEventListener('load', function() {
       connection = conn;
       setupConnectionListeners();
       statusText.innerText = "🟢 Player 2 Connected! Game Live.";
+      
+      // HOST LIVE: Transform Host button into "Start New Game" button
       transformToStartNewGameButton();
     });
 
@@ -92,7 +104,7 @@ window.addEventListener('load', function() {
   }
 
   // ==========================================================================
-  // SHARE LINK 
+  // SHARE LINK (Initial Baseline Setup for Host Only)
   // ==========================================================================
   if (copyBtn) {
     copyBtn.onclick = function() {
@@ -113,27 +125,21 @@ window.addEventListener('load', function() {
     }
   }
 
-  function getCoordName(x, y) {
-    if (x === -1 && y === -1) return "Top-Left Corner";
-    if (x === -1) return `Row ${y + 1} Label`;
-    if (y === -1) return `Column ${letters[x]} Label`;
-    return `${letters[x]}${y + 1}`;
-  }
-
   function setupConnectionListeners() {
     connection.on('data', (data) => {
-      const coordName = getCoordName(data.x, data.y);
+      const opponentLetter = letters[data.x];
+      const opponentNumber = data.y + 1;
 
       // Handle Cross-Map Transfer
       if (data.isCrossMapTransfer) {
         const sourceMap = data.sourceIsMiniMap ? miniMap : board;
-        const oldCell = sourceMap.querySelector(`[data-x="${data.oldX}"][data-y="${data.oldY}"]`);
+        const oldCell = sourceMap.querySelector(`.cell[data-x="${data.oldX}"][data-y="${data.oldY}"]`);
         if (oldCell && oldCell.children[data.tokenIndex]) {
           oldCell.children[data.tokenIndex].remove();
         }
 
         if (data.isMiniMap) {
-          const targetCell = miniMap.querySelector(`[data-x="${data.x}"][data-y="${data.y}"]`);
+          const targetCell = miniMap.querySelector(`.cell[data-x="${data.x}"][data-y="${data.y}"]`);
           if (targetCell) {
             const remoteToken = document.createElement('div');
             remoteToken.className = `token ${data.color}`;
@@ -142,7 +148,7 @@ window.addEventListener('load', function() {
             bindTokenDragEvents(remoteToken, false);
             targetCell.appendChild(remoteToken);
           }
-          console.log(`📡 RADAR ALERT: Opponent moved a token onto the Shared Mini-Map at ${coordName}.`);
+          console.log(`📡 RADAR ALERT: Opponent moved a token onto the Shared Mini-Map at ${opponentLetter}${opponentNumber}.`);
         } else {
           console.log(`📡 RADAR ALERT: Opponent pulled a token off the Shared Mini-Map into their private view.`);
         }
@@ -151,7 +157,7 @@ window.addEventListener('load', function() {
 
       // Handle standard Mini-Map mutations
       if (data.isMiniMap) {
-        const targetCell = miniMap.querySelector(`[data-x="${data.x}"][data-y="${data.y}"]`);
+        const targetCell = miniMap.querySelector(`.cell[data-x="${data.x}"][data-y="${data.y}"]`);
         if (!targetCell) return;
 
         if (data.isNew) {
@@ -162,12 +168,12 @@ window.addEventListener('load', function() {
           bindTokenDragEvents(remoteToken, false);
           targetCell.appendChild(remoteToken);
         } else if (data.isDelete) {
-          const oldCell = miniMap.querySelector(`[data-x="${data.oldX}"][data-y="${data.oldY}"]`);
+          const oldCell = miniMap.querySelector(`.cell[data-x="${data.oldX}"][data-y="${data.oldY}"]`);
           if (oldCell && oldCell.children[data.tokenIndex]) {
             oldCell.children[data.tokenIndex].remove();
           }
         } else {
-          const oldCell = miniMap.querySelector(`[data-x="${data.oldX}"][data-y="${data.oldY}"]`);
+          const oldCell = miniMap.querySelector(`.cell[data-x="${data.oldX}"][data-y="${data.oldY}"]`);
           if (oldCell) {
             const tokenToMove = Array.from(oldCell.children).find(child => child.classList.contains(data.color || 'token'));
             if (tokenToMove) {
@@ -180,11 +186,11 @@ window.addEventListener('load', function() {
 
       // Handle standard Main Board mutations
       if (data.isNew) {
-        console.log(`📡 RADAR ALERT: Opponent instantiated a token [${data.textLabel || 'Blank'}] on THEIR board at ${coordName}.`);
+        console.log(`📡 RADAR ALERT: Opponent instantiated a token [${data.textLabel || 'Blank'}] on THEIR board at ${opponentLetter}${opponentNumber}.`);
       } else if (data.isDelete) {
-        console.log(`📡 RADAR ALERT: Opponent deleted a token on THEIR board at ${getCoordName(data.oldX, data.oldY)}.`);
+        console.log(`📡 RADAR ALERT: Opponent deleted a token on THEIR board at ${letters[data.oldX]}${data.oldY + 1}.`);
       } else {
-        console.log(`📡 RADAR ALERT: Opponent shifted a piece on THEIR map from ${getCoordName(data.oldX, data.oldY)} to ${coordName}.`);
+        console.log(`📡 RADAR ALERT: Opponent shifted a piece on THEIR map from ${letters[data.oldX]}${data.oldY + 1} to ${opponentLetter}${opponentNumber}.`);
       }
     });
 
@@ -281,22 +287,34 @@ window.addEventListener('load', function() {
       const col = i % columns;
       const row = Math.floor(i / columns);
 
-      // We now calculate gameX and gameY for ALL cells, including border labels
-      const gameX = col - 1;
-      const gameY = row - 1;
-
       let labelText = '';
-      if (row === 0 && col !== 0) labelText = letters[gameX];
+      if (row === 0 && col !== 0) labelText = letters[col - 1];
       if (col === 0 && row !== 0) labelText = row;
 
       const mainCellOrLabel = (row === 0 || col === 0) ? createDiv('label', labelText) : createDiv('cell', '');
       const miniCellOrLabel = (row === 0 || col === 0) ? createDiv('label', labelText) : createDiv('cell', '');
-      
-      // Bind data attributes natively to everything
-      mainCellOrLabel.dataset.x = gameX;
-      mainCellOrLabel.dataset.y = gameY;
-      miniCellOrLabel.dataset.x = gameX;
-      miniCellOrLabel.dataset.y = gameY;
+
+      if (row !== 0 && col !== 0) {
+        const gameX = col - 1;
+        const gameY = row - 1;
+        
+        mainCellOrLabel.dataset.x = gameX;
+        mainCellOrLabel.dataset.y = gameY;
+        miniCellOrLabel.dataset.x = gameX;
+        miniCellOrLabel.dataset.y = gameY;
+
+        if (gameX === 0 && gameY === 0) {
+          mainCellOrLabel.setAttribute('data-wall-bottom', 'true');
+          miniCellOrLabel.setAttribute('data-wall-bottom', 'true');
+        }
+        if (gameX === 1 && gameY === 0) {
+          mainCellOrLabel.setAttribute('data-wall-right', 'true');
+          miniCellOrLabel.setAttribute('data-wall-right', 'true');
+        }
+        if (gameX === 2 && gameY === 0) {
+          mainCellOrLabel.setAttribute('data-window-bottom', 'true');
+          miniCellOrLabel.setAttribute('data-window-bottom', 'true');
+        }
 
       // ==========================================================================
       // MAP GENERATION: Oregon
@@ -399,9 +417,9 @@ window.addEventListener('load', function() {
       }      
 
 
-      // Drop events are now enabled across the entire board, including labels
-      configureGridCellEvents(mainCellOrLabel, gameX, gameY, false);
-      configureGridCellEvents(miniCellOrLabel, gameX, gameY, true);
+        configureGridCellEvents(mainCellOrLabel, gameX, gameY, false);
+        configureGridCellEvents(miniCellOrLabel, gameX, gameY, true);
+      }
 
       board.appendChild(mainCellOrLabel);
       miniMap.appendChild(miniCellOrLabel);
