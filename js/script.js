@@ -303,19 +303,6 @@ window.addEventListener('load', function() {
         miniCellOrLabel.dataset.x = gameX;
         miniCellOrLabel.dataset.y = gameY;
 
-        if (gameX === 0 && gameY === 0) {
-          mainCellOrLabel.setAttribute('data-wall-bottom', 'true');
-          miniCellOrLabel.setAttribute('data-wall-bottom', 'true');
-        }
-        if (gameX === 1 && gameY === 0) {
-          mainCellOrLabel.setAttribute('data-wall-right', 'true');
-          miniCellOrLabel.setAttribute('data-wall-right', 'true');
-        }
-        if (gameX === 2 && gameY === 0) {
-          mainCellOrLabel.setAttribute('data-window-bottom', 'true');
-          miniCellOrLabel.setAttribute('data-window-bottom', 'true');
-        }
-
       // ==========================================================================
       // MAP GENERATION: Oregon
       // ==========================================================================
@@ -407,11 +394,11 @@ window.addEventListener('load', function() {
         mainCellOrLabel.setAttribute('data-wall-right', 'true');
         miniCellOrLabel.setAttribute('data-wall-right', 'true');
       }
-      if ((gameX === 0  || gameX === 4 || gameX === 5) && gameY === 7) {
+      if ((gameX === 1  || gameX === 5 || gameX === 6) && gameY === 7) {
         mainCellOrLabel.setAttribute('data-wall-bottom', 'true');
         miniCellOrLabel.setAttribute('data-wall-bottom', 'true');
       }
-      if ((gameX === 3  || gameX === 6) && gameY === 7) {
+      if ((gameX === 4  || gameX === 7) && gameY === 7) {
         mainCellOrLabel.setAttribute('data-window-bottom', 'true');
         miniCellOrLabel.setAttribute('data-window-bottom', 'true');
       }      
