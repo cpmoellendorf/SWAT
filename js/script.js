@@ -291,8 +291,8 @@ window.addEventListener('load', function() {
       if (row === 0 && col !== 0) labelText = letters[col - 1];
       if (col === 0 && row !== 0) labelText = row;
 
-      const mainCellOrLabel = (row === 0 || col === 0 || row === 9 || col === 13) ? createDiv('label', labelText) : createDiv('cell', '');
-      const miniCellOrLabel = (row === 0 || col === 0 || row === 9 || col === 13) ? createDiv('label', labelText) : createDiv('cell', '');
+      const mainCellOrLabel = (row === 0 || col === 0 || row === 10 || col === 13) ? createDiv('label', labelText) : createDiv('cell', '');
+      const miniCellOrLabel = (row === 0 || col === 0 || row === 10 || col === 13) ? createDiv('label', labelText) : createDiv('cell', '');
 
       if (row !== 0 && col !== 0) {
         const gameX = col - 1;
