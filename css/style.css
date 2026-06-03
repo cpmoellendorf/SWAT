@@ -36,10 +36,10 @@ body {
 
 #mini-map {
   display: grid;
-  grid-template-columns: repeat(14, 1fr); /* CHANGED: 15 to 14 columns */
+  grid-template-columns: repeat(14, 1fr); 
   grid-template-rows: repeat(11, 1fr);
   width: 100%;
-  aspect-ratio: 14 / 11;                  /* CHANGED: 15 / 11 to 14 / 11 */
+  aspect-ratio: 14 / 11;                  
   gap: 2px;                   
   background-color: #f6f6f6;  
 }
@@ -58,7 +58,7 @@ body {
   box-sizing: border-box;
   max-width: none;
   max-height: none;
-  overflow: visible;         /* CHANGED from hidden to visible so borders render into gaps */
+  overflow: visible;         
 }
 
 #mini-map .cell:hover {
@@ -66,7 +66,7 @@ body {
 }
 
 #mini-map .label {
-  background-color: #696969; /* CHANGED: Darkish gray instead of #222222 */
+  background-color: #696969; 
   color: #ffffff;
   font-weight: bold;
   display: flex;
@@ -77,9 +77,15 @@ body {
   user-select: none;
   width: 100%;
   height: 100%;
+  position: relative;
+  flex-wrap: wrap;
+  gap: 1px;
+  padding: 1px;
+  box-sizing: border-box;
+  overflow: visible;
 }
 
-/* Fixed Token Sizes inside Dynamic Mini-Map Cells */
+/* Fixed Token Sizes inside Dynamic Mini-Map Cells & Labels */
 #mini-map .token {
   flex-basis: 12px;
   width: 12px;
@@ -89,7 +95,8 @@ body {
   font-size: 5px;
 }
 
-#mini-map .cell:has(.token:nth-child(2)) .token {
+#mini-map .cell:has(.token ~ .token) .token,
+#mini-map .label:has(.token ~ .token) .token {
   flex-basis: 8px;
   width: 8px;
   height: 8px;
@@ -103,9 +110,9 @@ body {
    ========================================================================== */
 #game-board {
   display: grid;
-  grid-template-columns: repeat(14, 1fr); /* CHANGED: 15 to 14 columns */
+  grid-template-columns: repeat(14, 1fr); 
   grid-template-rows: repeat(11, 1fr);
-  width: 560px;                           /* OPTIONAL: Scaled down slightly from 600px to maintain aspect ratio integrity */
+  width: 560px;                           
   height: 440px;
   gap: 2px;
   background-color: #f6f6f6;
@@ -135,7 +142,7 @@ body {
 }
 
 .label {
-  background-color: #696969; /* CHANGED: Darkish gray instead of #222222 */
+  background-color: #696969; 
   color: #ffffff;
   font-weight: bold;
   display: flex;
@@ -146,6 +153,27 @@ body {
   user-select: none;
   width: 100%;
   height: 100%;
+  cursor: pointer;
+  position: relative;
+  flex-wrap: wrap;
+  gap: 1px;
+  padding: 1px;
+  box-sizing: border-box;
+  overflow: visible;
+}
+
+.label:hover {
+  background-color: #555555;
+}
+
+/* Static Coordinates Layer: Absolute centering forces text underneath tokens */
+.label-text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1;
+  pointer-events: none;
 }
 
 /* ==========================================================================
@@ -160,7 +188,7 @@ body {
   height: calc(100% + 4px);
   background-color: #000000;
   z-index: 10;
-  pointer-events: none;    /* Fixes drag and drop: lets mouse events pass through to the cell */
+  pointer-events: none;    
 }
 
 .cell[data-wall-bottom="true"]::before {
@@ -172,7 +200,7 @@ body {
   width: calc(100% + 4px); 
   background-color: #000000;
   z-index: 10;
-  pointer-events: none;    /* Fixes drag and drop: lets mouse events pass through to the cell */
+  pointer-events: none;    
 }
 
 .cell[data-wall-top="true"]::before {
@@ -234,7 +262,7 @@ body {
   height: calc(100% + 4px);
   border-right: 2px dashed #8B4513;
   z-index: 15;
-  pointer-events: none;    /* Fixes drag and drop: lets mouse events pass through to the cell */
+  pointer-events: none;    
 }
 
 .cell[data-window-bottom="true"]::before {
@@ -246,7 +274,7 @@ body {
   width: calc(100% + 4px);
   border-bottom: 2px dashed #8B4513;
   z-index: 15;
-  pointer-events: none;    /* Fixes drag and drop: lets mouse events pass through to the cell */
+  pointer-events: none;    
 }
 
 /* ==========================================================================
@@ -255,7 +283,7 @@ body {
 .token {
   border-radius: 50%;
   background-color: #1b4d18; 
-  z-index: 5;
+  z-index: 5; /* Keeps tokens safely sitting on top of coordinates layer (z-index: 1) */
   user-select: none;
   cursor: grab;
   flex-grow: 0;
@@ -275,7 +303,9 @@ body {
   color: #ffffff;
 }
 
-.cell:has(.token:nth-child(2)) .token {
+/* Squeezing tokens when multiple elements exist inside cells/labels */
+.cell:has(.token ~ .token) .token,
+.label:has(.token ~ .token) .token {
   flex-basis: 16px;
   width: 16px;
   height: 16px;
@@ -284,7 +314,8 @@ body {
   font-size: 8px;
 }
 
-.cell:has(.token:nth-child(3)) .token {
+.cell:has(.token ~ .token ~ .token) .token,
+.label:has(.token ~ .token ~ .token) .token {
   flex-basis: 11px;
   width: 11px;
   height: 11px;
@@ -311,9 +342,11 @@ body {
   font-size: 7px;
 }
 
-/* Scale down even further when tokens are multiple-stacked inside one grid cell */
-.cell:has(.token:nth-child(2)) .token.light-green,
-.cell:has(.token:nth-child(2)) .token.grey {
+/* Scale down even further when tokens are multiple-stacked inside grid blocks */
+.cell:has(.token ~ .token) .token.light-green,
+.cell:has(.token ~ .token) .token.grey,
+.label:has(.token ~ .token) .token.light-green,
+.label:has(.token ~ .token) .token.grey {
   font-size: 5px;
 }
 
@@ -326,7 +359,7 @@ body {
 .main-game-layout {
   display: flex;
   flex-direction: row;
-  align-items: flex-start; /* Aligns all structural columns to the top */
+  align-items: flex-start; 
   gap: 40px;
   margin-top: 20px;
   flex-wrap: nowrap;
@@ -337,7 +370,7 @@ body {
   flex-direction: column;
   justify-content: flex-start;
   align-items: center;
-  gap: 20px; /* Clean tracking space between Mini-map and Guide Sheet */
+  gap: 20px; 
 }
 
 .sidebar-panel {

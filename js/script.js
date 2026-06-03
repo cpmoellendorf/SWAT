@@ -127,19 +127,19 @@ window.addEventListener('load', function() {
 
   function setupConnectionListeners() {
     connection.on('data', (data) => {
-      const opponentLetter = letters[data.x];
-      const opponentNumber = data.y + 1;
+      const opponentLetter = letters[data.x - 1] || `#${data.x}`;
+      const opponentNumber = data.y;
 
       // Handle Cross-Map Transfer
       if (data.isCrossMapTransfer) {
         const sourceMap = data.sourceIsMiniMap ? miniMap : board;
-        const oldCell = sourceMap.querySelector(`.cell[data-x="${data.oldX}"][data-y="${data.oldY}"]`);
+        const oldCell = sourceMap.querySelector(`[data-x="${data.oldX}"][data-y="${data.oldY}"]`);
         if (oldCell && oldCell.children[data.tokenIndex]) {
           oldCell.children[data.tokenIndex].remove();
         }
 
         if (data.isMiniMap) {
-          const targetCell = miniMap.querySelector(`.cell[data-x="${data.x}"][data-y="${data.y}"]`);
+          const targetCell = miniMap.querySelector(`[data-x="${data.x}"][data-y="${data.y}"]`);
           if (targetCell) {
             const remoteToken = document.createElement('div');
             remoteToken.className = `token ${data.color}`;
@@ -157,7 +157,7 @@ window.addEventListener('load', function() {
 
       // Handle standard Mini-Map mutations
       if (data.isMiniMap) {
-        const targetCell = miniMap.querySelector(`.cell[data-x="${data.x}"][data-y="${data.y}"]`);
+        const targetCell = miniMap.querySelector(`[data-x="${data.x}"][data-y="${data.y}"]`);
         if (!targetCell) return;
 
         if (data.isNew) {
@@ -168,12 +168,12 @@ window.addEventListener('load', function() {
           bindTokenDragEvents(remoteToken, false);
           targetCell.appendChild(remoteToken);
         } else if (data.isDelete) {
-          const oldCell = miniMap.querySelector(`.cell[data-x="${data.oldX}"][data-y="${data.oldY}"]`);
+          const oldCell = miniMap.querySelector(`[data-x="${data.oldX}"][data-y="${data.oldY}"]`);
           if (oldCell && oldCell.children[data.tokenIndex]) {
             oldCell.children[data.tokenIndex].remove();
           }
         } else {
-          const oldCell = miniMap.querySelector(`.cell[data-x="${data.oldX}"][data-y="${data.oldY}"]`);
+          const oldCell = miniMap.querySelector(`[data-x="${data.oldX}"][data-y="${data.oldY}"]`);
           if (oldCell) {
             const tokenToMove = Array.from(oldCell.children).find(child => child.classList.contains(data.color || 'token'));
             if (tokenToMove) {
@@ -188,9 +188,9 @@ window.addEventListener('load', function() {
       if (data.isNew) {
         console.log(`📡 RADAR ALERT: Opponent instantiated a token [${data.textLabel || 'Blank'}] on THEIR board at ${opponentLetter}${opponentNumber}.`);
       } else if (data.isDelete) {
-        console.log(`📡 RADAR ALERT: Opponent deleted a token on THEIR board at ${letters[data.oldX]}${data.oldY + 1}.`);
+        console.log(`📡 RADAR ALERT: Opponent deleted a token on THEIR board at ${letters[data.oldX - 1] || `#${data.oldX}`}${data.oldY}.`);
       } else {
-        console.log(`📡 RADAR ALERT: Opponent shifted a piece on THEIR map from ${letters[data.oldX]}${data.oldY + 1} to ${opponentLetter}${opponentNumber}.`);
+        console.log(`📡 RADAR ALERT: Opponent shifted a piece on THEIR map from ${letters[data.oldX - 1] || `#${data.oldX}`}${data.oldY} to ${opponentLetter}${opponentNumber}.`);
       }
     });
 
@@ -294,126 +294,127 @@ window.addEventListener('load', function() {
       const mainCellOrLabel = (row === 0 || col === 0 || row === 10 || col === 13) ? createDiv('label', labelText) : createDiv('cell', '');
       const miniCellOrLabel = (row === 0 || col === 0 || row === 10 || col === 13) ? createDiv('label', labelText) : createDiv('cell', '');
 
-      if (row !== 0 && col !== 0) {
+      // Assign universal coordinates to all grid locations (cells and labels)
+      mainCellOrLabel.dataset.x = col;
+      mainCellOrLabel.dataset.y = row;
+      miniCellOrLabel.dataset.x = col;
+      miniCellOrLabel.dataset.y = row;
+
+      // Enable drag/drop events on ALL positions (including labels)
+      configureGridCellEvents(mainCellOrLabel, col, row, false);
+      configureGridCellEvents(miniCellOrLabel, col, row, true);
+
+      // ==========================================================================
+      // MAP GENERATION: Oregon (Scoped strictly to playable inner bounds)
+      // ==========================================================================
+      if (row !== 0 && col !== 0 && row !== 10 && col !== 13) {
         const gameX = col - 1;
         const gameY = row - 1;
-        
-        mainCellOrLabel.dataset.x = gameX;
-        mainCellOrLabel.dataset.y = gameY;
-        miniCellOrLabel.dataset.x = gameX;
-        miniCellOrLabel.dataset.y = gameY;
 
-      // ==========================================================================
-      // MAP GENERATION: Oregon
-      // ==========================================================================
-      // Row 0
-      if (gameX === 7 && gameY === 0) {
-        mainCellOrLabel.setAttribute('data-window-top', 'true');
-        miniCellOrLabel.setAttribute('data-window-top', 'true');
-      }
-      if (gameX > 7 && gameX <= 10 && gameY === 0) {
-        mainCellOrLabel.setAttribute('data-wall-top', 'true');
-        miniCellOrLabel.setAttribute('data-wall-top', 'true');
-      }
-      if (gameX === 6 && gameY === 0) {
-        mainCellOrLabel.setAttribute('data-wall-right', 'true');
-        miniCellOrLabel.setAttribute('data-wall-right', 'true');
-      }
-      if (gameX === 1 && gameY === 0) {
-        mainCellOrLabel.setAttribute('data-wall-bottom', 'true');
-        miniCellOrLabel.setAttribute('data-wall-bottom', 'true');
-      } 
-      if (gameX >= 4 && gameX <= 6 && gameY === 0) {
-        mainCellOrLabel.setAttribute('data-wall-bottom', 'true');
-        miniCellOrLabel.setAttribute('data-wall-bottom', 'true');
-      }      
-      // Row 1
-      if ((gameX === 0 || gameX === 1 || gameX === 2 || gameX === 6 || gameX === 10) && gameY === 1) {
-        mainCellOrLabel.setAttribute('data-wall-right', 'true');
-        miniCellOrLabel.setAttribute('data-wall-right', 'true');
-      }
-      if ((gameX === 1 || gameX === 10) && gameY === 1) {
-        mainCellOrLabel.setAttribute('data-wall-bottom', 'true');
-        miniCellOrLabel.setAttribute('data-wall-bottom', 'true');
-      } 
-      // Row 2
-      if ((gameX === 2 || gameX === 9) && gameY === 2) {
-        mainCellOrLabel.setAttribute('data-wall-right', 'true');
-        miniCellOrLabel.setAttribute('data-wall-right', 'true');
-      }
-      if ((gameX === 1 || gameX === 2 || gameX === 8) && gameY === 2) {
-        mainCellOrLabel.setAttribute('data-wall-bottom', 'true');
-        miniCellOrLabel.setAttribute('data-wall-bottom', 'true');
-      }     
-      // Row 3
-      if ((gameX === 2 || gameX === 6 || gameX === 9) && gameY === 3) {
-        mainCellOrLabel.setAttribute('data-wall-right', 'true');
-        miniCellOrLabel.setAttribute('data-wall-right', 'true');
-      }
-      if (gameX === 0 && gameY === 3) {
-        mainCellOrLabel.setAttribute('data-window-right', 'true');
-        miniCellOrLabel.setAttribute('data-window-right', 'true');
-      }      
-      if ((gameX === 3 || gameX === 4 || gameX === 6 || gameX === 7 || gameX === 9) && gameY === 3) {
-        mainCellOrLabel.setAttribute('data-wall-bottom', 'true');
-        miniCellOrLabel.setAttribute('data-wall-bottom', 'true');
-      }
-      if ((gameX === 10) && gameY === 3) {
-        mainCellOrLabel.setAttribute('data-window-bottom', 'true');
-        miniCellOrLabel.setAttribute('data-window-bottom', 'true');
-      }
-      // Row 4
-      if ((gameX === 0 || gameX === 9 || gameX === 11) && gameY === 4) {
-        mainCellOrLabel.setAttribute('data-wall-right', 'true');
-        miniCellOrLabel.setAttribute('data-wall-right', 'true');
-      }
-      if ((gameX === 2 || gameX === 3 || gameX === 6) && gameY === 4) {
-        mainCellOrLabel.setAttribute('data-wall-bottom', 'true');
-        miniCellOrLabel.setAttribute('data-wall-bottom', 'true');
-      }
-      // Row 5
-      if ((gameX === 2 || gameX === 6 || gameX === 11) && gameY === 5) {
-        mainCellOrLabel.setAttribute('data-wall-right', 'true');
-        miniCellOrLabel.setAttribute('data-wall-right', 'true');
-      }
-      if (gameX === 10 && gameY === 5) {
-        mainCellOrLabel.setAttribute('data-wall-bottom', 'true');
-        miniCellOrLabel.setAttribute('data-wall-bottom', 'true');
-      }
-      // Row 6
-      if ((gameX === 2 || gameX === 6 || gameX === 9) && gameY === 6) {
-        mainCellOrLabel.setAttribute('data-wall-right', 'true');
-        miniCellOrLabel.setAttribute('data-wall-right', 'true');
-      }
-      if ((gameX === 0 || gameX === 7 || gameX === 9) && gameY === 6) {
-        mainCellOrLabel.setAttribute('data-wall-bottom', 'true');
-        miniCellOrLabel.setAttribute('data-wall-bottom', 'true');
-      }
-      // Row 7
-      if ((gameX === 0 || gameX === 2 || gameX === 4 || gameX === 6) && gameY === 7) {
-        mainCellOrLabel.setAttribute('data-wall-right', 'true');
-        miniCellOrLabel.setAttribute('data-wall-right', 'true');
-      }
-      if ((gameX === 0  || gameX === 4 || gameX === 5) && gameY === 7) {
-        mainCellOrLabel.setAttribute('data-wall-bottom', 'true');
-        miniCellOrLabel.setAttribute('data-wall-bottom', 'true');
-      }
-      if ((gameX === 3  || gameX === 6) && gameY === 7) {
-        mainCellOrLabel.setAttribute('data-window-bottom', 'true');
-        miniCellOrLabel.setAttribute('data-window-bottom', 'true');
-      }
-      if (gameX === 0 && gameY === 7) {
-        mainCellOrLabel.setAttribute('data-wall-left', 'true');
-        miniCellOrLabel.setAttribute('data-wall-left', 'true');
-      }
-      if (gameX === 0 && gameY === 8) {
-        mainCellOrLabel.setAttribute('data-wall-top', 'true');
-        miniCellOrLabel.setAttribute('data-wall-top', 'true');        
-      }            
-
-
-        configureGridCellEvents(mainCellOrLabel, gameX, gameY, false);
-        configureGridCellEvents(miniCellOrLabel, gameX, gameY, true);
+        // Row 0
+        if (gameX === 7 && gameY === 0) {
+          mainCellOrLabel.setAttribute('data-window-top', 'true');
+          miniCellOrLabel.setAttribute('data-window-top', 'true');
+        }
+        if (gameX > 7 && gameX <= 10 && gameY === 0) {
+          mainCellOrLabel.setAttribute('data-wall-top', 'true');
+          miniCellOrLabel.setAttribute('data-wall-top', 'true');
+        }
+        if (gameX === 6 && gameY === 0) {
+          mainCellOrLabel.setAttribute('data-wall-right', 'true');
+          miniCellOrLabel.setAttribute('data-wall-right', 'true');
+        }
+        if (gameX === 1 && gameY === 0) {
+          mainCellOrLabel.setAttribute('data-wall-bottom', 'true');
+          miniCellOrLabel.setAttribute('data-wall-bottom', 'true');
+        } 
+        if (gameX >= 4 && gameX <= 6 && gameY === 0) {
+          mainCellOrLabel.setAttribute('data-wall-bottom', 'true');
+          miniCellOrLabel.setAttribute('data-wall-bottom', 'true');
+        }      
+        // Row 1
+        if ((gameX === 0 || gameX === 1 || gameX === 2 || gameX === 6 || gameX === 10) && gameY === 1) {
+          mainCellOrLabel.setAttribute('data-wall-right', 'true');
+          miniCellOrLabel.setAttribute('data-wall-right', 'true');
+        }
+        if ((gameX === 1 || gameX === 10) && gameY === 1) {
+          mainCellOrLabel.setAttribute('data-wall-bottom', 'true');
+          miniCellOrLabel.setAttribute('data-wall-bottom', 'true');
+        } 
+        // Row 2
+        if ((gameX === 2 || gameX === 9) && gameY === 2) {
+          mainCellOrLabel.setAttribute('data-wall-right', 'true');
+          miniCellOrLabel.setAttribute('data-wall-right', 'true');
+        }
+        if ((gameX === 1 || gameX === 2 || gameX === 8) && gameY === 2) {
+          mainCellOrLabel.setAttribute('data-wall-bottom', 'true');
+          miniCellOrLabel.setAttribute('data-wall-bottom', 'true');
+        }     
+        // Row 3
+        if ((gameX === 2 || gameX === 6 || gameX === 9) && gameY === 3) {
+          mainCellOrLabel.setAttribute('data-wall-right', 'true');
+          miniCellOrLabel.setAttribute('data-wall-right', 'true');
+        }
+        if (gameX === 0 && gameY === 3) {
+          mainCellOrLabel.setAttribute('data-window-right', 'true');
+          miniCellOrLabel.setAttribute('data-window-right', 'true');
+        }      
+        if ((gameX === 3 || gameX === 4 || gameX === 6 || gameX === 7 || gameX === 9) && gameY === 3) {
+          mainCellOrLabel.setAttribute('data-wall-bottom', 'true');
+          miniCellOrLabel.setAttribute('data-wall-bottom', 'true');
+        }
+        if ((gameX === 10) && gameY === 3) {
+          mainCellOrLabel.setAttribute('data-window-bottom', 'true');
+          miniCellOrLabel.setAttribute('data-window-bottom', 'true');
+        }
+        // Row 4
+        if ((gameX === 0 || gameX === 9 || gameX === 11) && gameY === 4) {
+          mainCellOrLabel.setAttribute('data-wall-right', 'true');
+          miniCellOrLabel.setAttribute('data-wall-right', 'true');
+        }
+        if ((gameX === 2 || gameX === 3 || gameX === 6) && gameY === 4) {
+          mainCellOrLabel.setAttribute('data-wall-bottom', 'true');
+          miniCellOrLabel.setAttribute('data-wall-bottom', 'true');
+        }
+        // Row 5
+        if ((gameX === 2 || gameX === 6 || gameX === 11) && gameY === 5) {
+          mainCellOrLabel.setAttribute('data-wall-right', 'true');
+          miniCellOrLabel.setAttribute('data-wall-right', 'true');
+        }
+        if (gameX === 10 && gameY === 5) {
+          mainCellOrLabel.setAttribute('data-wall-bottom', 'true');
+          miniCellOrLabel.setAttribute('data-wall-bottom', 'true');
+        }
+        // Row 6
+        if ((gameX === 2 || gameX === 6 || gameX === 9) && gameY === 6) {
+          mainCellOrLabel.setAttribute('data-wall-right', 'true');
+          miniCellOrLabel.setAttribute('data-wall-right', 'true');
+        }
+        if ((gameX === 0 || gameX === 7 || gameX === 9) && gameY === 6) {
+          mainCellOrLabel.setAttribute('data-wall-bottom', 'true');
+          miniCellOrLabel.setAttribute('data-wall-bottom', 'true');
+        }
+        // Row 7
+        if ((gameX === 0 || gameX === 2 || gameX === 4 || gameX === 6) && gameY === 7) {
+          mainCellOrLabel.setAttribute('data-wall-right', 'true');
+          miniCellOrLabel.setAttribute('data-wall-right', 'true');
+        }
+        if ((gameX === 0  || gameX === 4 || gameX === 5) && gameY === 7) {
+          mainCellOrLabel.setAttribute('data-wall-bottom', 'true');
+          miniCellOrLabel.setAttribute('data-wall-bottom', 'true');
+        }
+        if ((gameX === 3  || gameX === 6) && gameY === 7) {
+          mainCellOrLabel.setAttribute('data-window-bottom', 'true');
+          miniCellOrLabel.setAttribute('data-window-bottom', 'true');
+        }
+        if (gameX === 0 && gameY === 7) {
+          mainCellOrLabel.setAttribute('data-wall-left', 'true');
+          miniCellOrLabel.setAttribute('data-wall-left', 'true');
+        }
+        if (gameX === 0 && gameY === 8) {
+          mainCellOrLabel.setAttribute('data-wall-top', 'true');
+          miniCellOrLabel.setAttribute('data-wall-top', 'true');        
+        }            
       }
 
       board.appendChild(mainCellOrLabel);
@@ -424,7 +425,14 @@ window.addEventListener('load', function() {
   function createDiv(className, text) {
     const el = document.createElement('div');
     el.className = className;
-    el.innerText = text;
+    if (className === 'label' && text !== '') {
+      const span = document.createElement('span');
+      span.className = 'label-text';
+      span.innerText = text;
+      el.appendChild(span);
+    } else {
+      el.innerText = text;
+    }
     return el;
   }
 
