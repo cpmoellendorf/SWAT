@@ -6,7 +6,7 @@ window.addEventListener('load', function() {
   const letters = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N'];
   const board = document.getElementById('game-board');
   const miniMap = document.getElementById('mini-map');
-  const columns = 15;
+  const columns = 14; // Adjusted from 15 to 14 to correct layout shape
   const rows = 11;
   const totalCells = columns * rows;
 
@@ -281,23 +281,21 @@ window.addEventListener('load', function() {
       const col = i % columns;
       const row = Math.floor(i / columns);
 
-      // We now calculate gameX and gameY for ALL cells, including border labels
-      const gameX = col - 1;
+      // Maps gameX directly to col to ensure letter 'A' spans the initial column
+      const gameX = col;
       const gameY = row - 1;
 
       let labelText = '';
-      if (row === 0 && col !== 0) labelText = letters[gameX];
-      if (col === 0 && row !== 0) labelText = row;
-
-      const mainCellOrLabel = (row === 0 || col === 0) ? createDiv('label', labelText) : createDiv('cell', '');
-      const miniCellOrLabel = (row === 0 || col === 0) ? createDiv('label', labelText) : createDiv('cell', '');
-      
-      // If it's the rightmost column (N) or bottommost row (10), apply the rim color modifier
-      if (row === rows - 1 || col === columns - 1) {
-        mainCellOrLabel.classList.add('rim-bg');
-        miniCellOrLabel.classList.add('rim-bg');
+      if (row === 0) {
+        labelText = letters[gameX];
+      } else if (col === 0) {
+        labelText = row;
       }
 
+      const isLabel = (row === 0 || col === 0);
+      const mainCellOrLabel = isLabel ? createDiv('label', labelText) : createDiv('cell', '');
+      const miniCellOrLabel = isLabel ? createDiv('label', labelText) : createDiv('cell', '');
+      
       // Bind data attributes natively to everything
       mainCellOrLabel.dataset.x = gameX;
       mainCellOrLabel.dataset.y = gameY;
