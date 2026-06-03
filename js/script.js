@@ -307,98 +307,98 @@ window.addEventListener('load', function() {
       // MAP GENERATION: Oregon
       // ==========================================================================
       // Row 0
-      if (gameX === 8 && gameY === -1) {
+      if (gameX === 7 && gameY === -1) {
         mainCellOrLabel.setAttribute('data-window-bottom', 'true');
         miniCellOrLabel.setAttribute('data-window-bottom', 'true');
       }
-      if (gameX > 8 && gameX <= 11 && gameY === -1) {
+      if (gameX > 7 && gameX <= 10 && gameY === -1) {
         mainCellOrLabel.setAttribute('data-wall-bottom', 'true');
         miniCellOrLabel.setAttribute('data-wall-bottom', 'true');
       }
-      if (gameX === 7 && gameY === 0) {
+      if (gameX === 6 && gameY === 0) {
         mainCellOrLabel.setAttribute('data-wall-right', 'true');
         miniCellOrLabel.setAttribute('data-wall-right', 'true');
       }
-      if (gameX === 2 && gameY === 0) {
+      if (gameX === 1 && gameY === 0) {
         mainCellOrLabel.setAttribute('data-wall-bottom', 'true');
         miniCellOrLabel.setAttribute('data-wall-bottom', 'true');
       } 
-      if (gameX >= 5 && gameX <= 7 && gameY === 0) {
+      if (gameX >= 4 && gameX <= 6 && gameY === 0) {
         mainCellOrLabel.setAttribute('data-wall-bottom', 'true');
         miniCellOrLabel.setAttribute('data-wall-bottom', 'true');
       }      
       // Row 1
-      if ((gameX === 1 || gameX === 2 || gameX === 3 || gameX === 7 || gameX === 11) && gameY === 1) {
+      if ((gameX === 0 || gameX === 1 || gameX === 2 || gameX === 6 || gameX === 10) && gameY === 1) {
         mainCellOrLabel.setAttribute('data-wall-right', 'true');
         miniCellOrLabel.setAttribute('data-wall-right', 'true');
       }
-      if ((gameX === 2 || gameX === 11) && gameY === 1) {
+      if ((gameX === 1 || gameX === 10) && gameY === 1) {
         mainCellOrLabel.setAttribute('data-wall-bottom', 'true');
         miniCellOrLabel.setAttribute('data-wall-bottom', 'true');
       } 
       // Row 2
-      if ((gameX === 3 || gameX === 10) && gameY === 2) {
+      if ((gameX === 2 || gameX === 9) && gameY === 2) {
         mainCellOrLabel.setAttribute('data-wall-right', 'true');
         miniCellOrLabel.setAttribute('data-wall-right', 'true');
       }
-      if ((gameX === 2 || gameX === 3 || gameX === 9) && gameY === 2) {
+      if ((gameX === 1 || gameX === 2 || gameX === 8) && gameY === 2) {
         mainCellOrLabel.setAttribute('data-wall-bottom', 'true');
         miniCellOrLabel.setAttribute('data-wall-bottom', 'true');
       }     
       // Row 3
-      if ((gameX === 3 || gameX === 7 || gameX === 10) && gameY === 3) {
+      if ((gameX === 2 || gameX === 6 || gameX === 9) && gameY === 3) {
         mainCellOrLabel.setAttribute('data-wall-right', 'true');
         miniCellOrLabel.setAttribute('data-wall-right', 'true');
       }
-      if (gameX === 1 && gameY === 3) {
+      if (gameX === 0 && gameY === 2) {
         mainCellOrLabel.setAttribute('data-window-right', 'true');
         miniCellOrLabel.setAttribute('data-window-right', 'true');
       }      
-      if ((gameX === 4 || gameX === 5 || gameX === 7 || gameX === 8 || gameX === 10) && gameY === 3) {
+      if ((gameX === 3 || gameX === 4 || gameX === 6 || gameX === 7 || gameX === 9) && gameY === 3) {
         mainCellOrLabel.setAttribute('data-wall-bottom', 'true');
         miniCellOrLabel.setAttribute('data-wall-bottom', 'true');
       }
-      if ((gameX === 11) && gameY === 3) {
+      if ((gameX === 10) && gameY === 2) {
         mainCellOrLabel.setAttribute('data-window-bottom', 'true');
         miniCellOrLabel.setAttribute('data-window-bottom', 'true');
       }
       // Row 4
-      if ((gameX === 1 || gameX === 10 || gameX === 12) && gameY === 4) {
+      if ((gameX === 0 || gameX === 9 || gameX === 11) && gameY === 4) {
         mainCellOrLabel.setAttribute('data-wall-right', 'true');
         miniCellOrLabel.setAttribute('data-wall-right', 'true');
       }
-      if ((gameX === 3 || gameX === 4 || gameX === 7) && gameY === 4) {
+      if ((gameX === 2 || gameX === 3 || gameX === 6) && gameY === 4) {
         mainCellOrLabel.setAttribute('data-wall-bottom', 'true');
         miniCellOrLabel.setAttribute('data-wall-bottom', 'true');
       }
       // Row 5
-      if ((gameX === 3 || gameX === 7 || gameX === 12) && gameY === 5) {
+      if ((gameX === 2 || gameX === 6 || gameX === 11) && gameY === 5) {
         mainCellOrLabel.setAttribute('data-wall-right', 'true');
         miniCellOrLabel.setAttribute('data-wall-right', 'true');
       }
-      if (gameX === 11 && gameY === 5) {
+      if (gameX === 10 && gameY === 5) {
         mainCellOrLabel.setAttribute('data-wall-bottom', 'true');
         miniCellOrLabel.setAttribute('data-wall-bottom', 'true');
       }
       // Row 6
-      if ((gameX === 3 || gameX === 7 || gameX === 10) && gameY === 6) {
+      if ((gameX === 2 || gameX === 6 || gameX === 9) && gameY === 6) {
         mainCellOrLabel.setAttribute('data-wall-right', 'true');
         miniCellOrLabel.setAttribute('data-wall-right', 'true');
       }
-      if ((gameX === 1 || gameX === 8 || gameX === 10) && gameY === 6) {
+      if ((gameX === 0 || gameX === 7 || gameX === 9) && gameY === 6) {
         mainCellOrLabel.setAttribute('data-wall-bottom', 'true');
         miniCellOrLabel.setAttribute('data-wall-bottom', 'true');
       }
       // Row 7
-      if ((gameX === 0 || gameX === 1 || gameX === 3 || gameX === 5 || gameX === 7) && gameY === 7) {
+      if ((gameX === 0 || gameX === 2 || gameX === 4 || gameX === 6) && gameY === 7) {
         mainCellOrLabel.setAttribute('data-wall-right', 'true');
         miniCellOrLabel.setAttribute('data-wall-right', 'true');
       }
-      if ((gameX === 1  || gameX === 5 || gameX === 6) && gameY === 7) {
+      if ((gameX === 0  || gameX === 4 || gameX === 5) && gameY === 7) {
         mainCellOrLabel.setAttribute('data-wall-bottom', 'true');
         miniCellOrLabel.setAttribute('data-wall-bottom', 'true');
       }
-      if ((gameX === 4  || gameX === 7) && gameY === 7) {
+      if ((gameX === 3  || gameX === 6) && gameY === 6) {
         mainCellOrLabel.setAttribute('data-window-bottom', 'true');
         miniCellOrLabel.setAttribute('data-window-bottom', 'true');
       }      
