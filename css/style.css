@@ -13,7 +13,7 @@ body {
    DYNAMIC MINI-MAP (Shared Board)
    ========================================================================== */
 #mini-map-container {
-  background-color: #222222;
+  background-color: #414141;
   padding: 8px;
   border-radius: 6px;
   border: 1px solid #444444;
@@ -118,7 +118,7 @@ body {
   height: 440px;
   gap: 2px;
   padding: 2px;
-  background-color: #222222;
+  background-color: #414141;
   margin-top: 20px;
 }
 
