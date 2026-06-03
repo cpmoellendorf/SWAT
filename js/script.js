@@ -298,23 +298,10 @@ window.addEventListener('load', function() {
       miniCellOrLabel.dataset.x = gameX;
       miniCellOrLabel.dataset.y = gameY;
 
-      // Map Generation Logic
-      if (gameX === 0 && gameY === 0) {
-        mainCellOrLabel.setAttribute('data-wall-bottom', 'true');
-        miniCellOrLabel.setAttribute('data-wall-bottom', 'true');
-      }
-      if (gameX === 1 && gameY === 0) {
-        mainCellOrLabel.setAttribute('data-wall-right', 'true');
-        miniCellOrLabel.setAttribute('data-wall-right', 'true');
-      }
-      if (gameX === 2 && gameY === 0) {
-        mainCellOrLabel.setAttribute('data-window-bottom', 'true');
-        miniCellOrLabel.setAttribute('data-window-bottom', 'true');
-      }
-      
       // ==========================================================================
-      // MAP: Oregon
+      // MAP GENERATION: Oregon
       // ==========================================================================
+      // Row 1
       if (gameX === 8 && gameY === -1) {
         mainCellOrLabel.setAttribute('data-window-bottom', 'true');
         miniCellOrLabel.setAttribute('data-window-bottom', 'true');
@@ -323,6 +310,19 @@ window.addEventListener('load', function() {
         mainCellOrLabel.setAttribute('data-wall-bottom', 'true');
         miniCellOrLabel.setAttribute('data-wall-bottom', 'true');
       }
+      if (gameX === 7 && gameY === 0) {
+        mainCellOrLabel.setAttribute('data-wall-right', 'true');
+        miniCellOrLabel.setAttribute('data-wall-right', 'true');
+      }
+      if (gameX === 1 && gameY === 0) {
+        mainCellOrLabel.setAttribute('data-wall-bottom', 'true');
+        miniCellOrLabel.setAttribute('data-wall-bottom', 'true');
+      } 
+      if (gameX >= 4 && gameX <= 6 && gameY === 0) {
+        mainCellOrLabel.setAttribute('data-wall-bottom', 'true');
+        miniCellOrLabel.setAttribute('data-wall-bottom', 'true');
+      }      
+
 
       // Drop events are now enabled across the entire board, including labels
       configureGridCellEvents(mainCellOrLabel, gameX, gameY, false);
