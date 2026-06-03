@@ -398,7 +398,7 @@ window.addEventListener('load', function() {
         mainCellOrLabel.setAttribute('data-wall-bottom', 'true');
         miniCellOrLabel.setAttribute('data-wall-bottom', 'true');
       }
-      if ((gameX === 3  || gameX === 6) && gameY === 5) {
+      if ((gameX === 3  || gameX === 6) && gameY === 7) {
         mainCellOrLabel.setAttribute('data-window-bottom', 'true');
         miniCellOrLabel.setAttribute('data-window-bottom', 'true');
       }      
