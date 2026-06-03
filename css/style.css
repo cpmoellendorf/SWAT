@@ -13,7 +13,7 @@ body {
    DYNAMIC MINI-MAP (Shared Board)
    ========================================================================== */
 #mini-map-container {
-  background-color: #414141;
+  background-color: #222222;
   padding: 8px;
   border-radius: 6px;
   border: 1px solid #444444;
@@ -36,14 +36,12 @@ body {
 
 #mini-map {
   display: grid;
-  grid-template-columns: repeat(14, 1fr);
+  grid-template-columns: repeat(15, 1fr);
   grid-template-rows: repeat(11, 1fr);
   width: 100%;
-  aspect-ratio: 14 / 11;
+  aspect-ratio: 15 / 11;
   gap: 2px;                   
-  padding: 2px;
-  background-color: #222222;  
-  box-sizing: border-box;
+  background-color: #f6f6f6;  
 }
 
 #mini-map .cell {
@@ -112,13 +110,12 @@ body {
    ========================================================================== */
 #game-board {
   display: grid;
-  grid-template-columns: repeat(14, 1fr);
+  grid-template-columns: repeat(15, 1fr);
   grid-template-rows: repeat(11, 1fr);
-  width: 560px;
+  width: 600px;
   height: 440px;
   gap: 2px;
-  padding: 2px;
-  background-color: #414141;
+  background-color: #f6f6f6;
   margin-top: 20px;
 }
 
