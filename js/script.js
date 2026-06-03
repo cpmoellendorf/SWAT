@@ -405,6 +405,10 @@ window.addEventListener('load', function() {
       if (gameX === 0 && gameY === 7) {
         mainCellOrLabel.setAttribute('data-wall-left', 'true');
         miniCellOrLabel.setAttribute('data-wall-left', 'true');
+      }
+      if (gameX === 0 && gameY === 8) {
+        mainCellOrLabel.setAttribute('data-wall-top', 'true');
+        miniCellOrLabel.setAttribute('data-wall-top', 'true');        
       }            
 
 
