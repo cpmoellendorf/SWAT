@@ -319,13 +319,13 @@ window.addEventListener('load', function() {
         // MAP: Oregon
         // ==========================================================================
         
-        if (gameX === 8 && gameY === -1) {
-          mainCellOrLabel.setAttribute('data-window-bottom', 'true');
-          miniCellOrLabel.setAttribute('data-window-bottom', 'true');
+        if (gameX === 8 && gameY === 0) {
+          mainCellOrLabel.setAttribute('data-window-top', 'true');
+          miniCellOrLabel.setAttribute('data-window-top', 'true');
         }
-        if (gameX > 8 && gameX <= 11 && gameY === -1) {
-          mainCellOrLabel.setAttribute('data-wall-bottom', 'true');
-          miniCellOrLabel.setAttribute('data-wall-bottom', 'true');
+        if (gameX > 8 && gameX <= 11 && gameY === 0) {
+          mainCellOrLabel.setAttribute('data-wall-top', 'true');
+          miniCellOrLabel.setAttribute('data-wall-top', 'true');
         }
 
         configureGridCellEvents(mainCellOrLabel, gameX, gameY, false);
