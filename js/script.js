@@ -303,22 +303,11 @@ window.addEventListener('load', function() {
         miniCellOrLabel.dataset.x = gameX;
         miniCellOrLabel.dataset.y = gameY;
 
-        if (gameX === 0 && gameY === 0) {
-          mainCellOrLabel.setAttribute('data-wall-bottom', 'true');
-          miniCellOrLabel.setAttribute('data-wall-bottom', 'true');
-        }
-        if (gameX === 1 && gameY === 0) {
-          mainCellOrLabel.setAttribute('data-wall-right', 'true');
-          miniCellOrLabel.setAttribute('data-wall-right', 'true');
-        }
-        if (gameX === 2 && gameY === 0) {
-          mainCellOrLabel.setAttribute('data-window-bottom', 'true');
-          miniCellOrLabel.setAttribute('data-window-bottom', 'true');
-        }
         // ==========================================================================
         // MAP: Oregon
         // ==========================================================================
         
+        // Row 1
         if (gameX === 8 && gameY === 0) {
           mainCellOrLabel.setAttribute('data-window-top', 'true');
           miniCellOrLabel.setAttribute('data-window-top', 'true');
@@ -326,6 +315,10 @@ window.addEventListener('load', function() {
         if (gameX > 8 && gameX <= 11 && gameY === 0) {
           mainCellOrLabel.setAttribute('data-wall-top', 'true');
           miniCellOrLabel.setAttribute('data-wall-top', 'true');
+        }
+        if (gameX === 7 && gameY === 0) {
+          mainCellOrLabel.setAttribute('data-wall-right', 'true');
+          miniCellOrLabel.setAttribute('data-wall-right', 'true');
         }
 
         configureGridCellEvents(mainCellOrLabel, gameX, gameY, false);
