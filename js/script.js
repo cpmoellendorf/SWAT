@@ -301,7 +301,7 @@ window.addEventListener('load', function() {
       // ==========================================================================
       // MAP GENERATION: Oregon
       // ==========================================================================
-      // Row 1
+      // Row 0
       if (gameX === 8 && gameY === -1) {
         mainCellOrLabel.setAttribute('data-window-bottom', 'true');
         miniCellOrLabel.setAttribute('data-window-bottom', 'true');
@@ -314,14 +314,26 @@ window.addEventListener('load', function() {
         mainCellOrLabel.setAttribute('data-wall-right', 'true');
         miniCellOrLabel.setAttribute('data-wall-right', 'true');
       }
-      if (gameX === 1 && gameY === 0) {
+      if (gameX === 2 && gameY === 0) {
         mainCellOrLabel.setAttribute('data-wall-bottom', 'true');
         miniCellOrLabel.setAttribute('data-wall-bottom', 'true');
       } 
-      if (gameX >= 4 && gameX <= 6 && gameY === 0) {
+      if (gameX >= 5 && gameX <= 7 && gameY === 0) {
         mainCellOrLabel.setAttribute('data-wall-bottom', 'true');
         miniCellOrLabel.setAttribute('data-wall-bottom', 'true');
       }      
+      // Row 1
+      if ((gameX === 1 || gameX === 2 || gameX === 3 || gameX === 7 || gameX === 11) && gameY === 1) {
+        mainCellOrLabel.setAttribute('data-wall-right', 'true');
+        miniCellOrLabel.setAttribute('data-wall-right', 'true');
+      }
+      if ((gameX === 2 || gameX === 11) && gameY === 1) {
+        mainCellOrLabel.setAttribute('data-wall-bottom', 'true');
+        miniCellOrLabel.setAttribute('data-wall-bottom', 'true');
+      } 
+      // Row 2
+      
+
 
 
       // Drop events are now enabled across the entire board, including labels
