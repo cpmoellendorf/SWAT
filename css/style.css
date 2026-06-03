@@ -42,7 +42,7 @@ body {
   aspect-ratio: 14 / 11;
   gap: 2px;                   
   padding: 2px;
-  background-color: #f6f6f6;  
+  background-color: #222222;  
   box-sizing: border-box;
 }
 
@@ -118,7 +118,7 @@ body {
   height: 440px;
   gap: 2px;
   padding: 2px;
-  background-color: #f6f6f6;
+  background-color: #222222;
   margin-top: 20px;
 }
 
