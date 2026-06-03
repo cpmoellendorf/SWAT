@@ -315,6 +315,18 @@ window.addEventListener('load', function() {
           mainCellOrLabel.setAttribute('data-window-bottom', 'true');
           miniCellOrLabel.setAttribute('data-window-bottom', 'true');
         }
+        // ==========================================================================
+        // MAP: Oregon
+        // ==========================================================================
+        
+        if (gameX === 8 && gameY === -1) {
+          mainCellOrLabel.setAttribute('data-window-bottom', 'true');
+          miniCellOrLabel.setAttribute('data-window-bottom', 'true');
+        }
+        if (gameX > 8 && gameX <= 11 && gameY === -1) {
+          mainCellOrLabel.setAttribute('data-wall-bottom', 'true');
+          miniCellOrLabel.setAttribute('data-wall-bottom', 'true');
+        }
 
         configureGridCellEvents(mainCellOrLabel, gameX, gameY, false);
         configureGridCellEvents(miniCellOrLabel, gameX, gameY, true);
