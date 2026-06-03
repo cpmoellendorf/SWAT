@@ -307,13 +307,13 @@ window.addEventListener('load', function() {
       // MAP GENERATION: Oregon
       // ==========================================================================
       // Row 0
-      if (gameX === 7 && gameY === -1) {
-        mainCellOrLabel.setAttribute('data-window-bottom', 'true');
-        miniCellOrLabel.setAttribute('data-window-bottom', 'true');
+      if (gameX === 7 && gameY === 0) {
+        mainCellOrLabel.setAttribute('data-window-top', 'true');
+        miniCellOrLabel.setAttribute('data-window-top', 'true');
       }
-      if (gameX > 7 && gameX <= 10 && gameY === -1) {
-        mainCellOrLabel.setAttribute('data-wall-bottom', 'true');
-        miniCellOrLabel.setAttribute('data-wall-bottom', 'true');
+      if (gameX > 7 && gameX <= 10 && gameY === 0) {
+        mainCellOrLabel.setAttribute('data-wall-top', 'true');
+        miniCellOrLabel.setAttribute('data-wall-top', 'true');
       }
       if (gameX === 6 && gameY === 0) {
         mainCellOrLabel.setAttribute('data-wall-right', 'true');
@@ -401,7 +401,11 @@ window.addEventListener('load', function() {
       if ((gameX === 3  || gameX === 6) && gameY === 7) {
         mainCellOrLabel.setAttribute('data-window-bottom', 'true');
         miniCellOrLabel.setAttribute('data-window-bottom', 'true');
-      }      
+      }
+      if (gameX === 0 && gameY === 7) {
+        mainCellOrLabel.setAttribute('data-wall-left', 'true');
+        miniCellOrLabel.setAttribute('data-wall-left', 'true');
+      }            
 
 
         configureGridCellEvents(mainCellOrLabel, gameX, gameY, false);
