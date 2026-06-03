@@ -289,12 +289,15 @@ window.addEventListener('load', function() {
       if (row === 0 && col !== 0) labelText = letters[gameX];
       if (col === 0 && row !== 0) labelText = row;
 
-      // Determine if this cell belongs to any side of the outer rim boundary
-      const isRim = (row === 0 || col === 0 || row === rows - 1 || col === columns - 1);
-
-      const mainCellOrLabel = isRim ? createDiv('label', labelText) : createDiv('cell', '');
-      const miniCellOrLabel = isRim ? createDiv('label', labelText) : createDiv('cell', '');
+      const mainCellOrLabel = (row === 0 || col === 0) ? createDiv('label', labelText) : createDiv('cell', '');
+      const miniCellOrLabel = (row === 0 || col === 0) ? createDiv('label', labelText) : createDiv('cell', '');
       
+      // If it's the rightmost column (N) or bottommost row (10), apply the rim color modifier
+      if (row === rows - 1 || col === columns - 1) {
+        mainCellOrLabel.classList.add('rim-bg');
+        miniCellOrLabel.classList.add('rim-bg');
+      }
+
       // Bind data attributes natively to everything
       mainCellOrLabel.dataset.x = gameX;
       mainCellOrLabel.dataset.y = gameY;
