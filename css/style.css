@@ -36,12 +36,14 @@ body {
 
 #mini-map {
   display: grid;
-  grid-template-columns: repeat(15, 1fr);
+  grid-template-columns: repeat(14, 1fr);
   grid-template-rows: repeat(11, 1fr);
   width: 100%;
-  aspect-ratio: 15 / 11;
+  aspect-ratio: 14 / 11;
   gap: 2px;                   
+  padding: 2px;
   background-color: #f6f6f6;  
+  box-sizing: border-box;
 }
 
 #mini-map .cell {
@@ -110,11 +112,12 @@ body {
    ========================================================================== */
 #game-board {
   display: grid;
-  grid-template-columns: repeat(15, 1fr);
+  grid-template-columns: repeat(14, 1fr);
   grid-template-rows: repeat(11, 1fr);
-  width: 600px;
+  width: 560px;
   height: 440px;
   gap: 2px;
+  padding: 2px;
   background-color: #f6f6f6;
   margin-top: 20px;
 }
