@@ -350,7 +350,7 @@ window.addEventListener('load', function() {
         mainCellOrLabel.setAttribute('data-wall-right', 'true');
         miniCellOrLabel.setAttribute('data-wall-right', 'true');
       }
-      if (gameX === 0 && gameY === 2) {
+      if (gameX === 0 && gameY === 3) {
         mainCellOrLabel.setAttribute('data-window-right', 'true');
         miniCellOrLabel.setAttribute('data-window-right', 'true');
       }      
@@ -358,7 +358,7 @@ window.addEventListener('load', function() {
         mainCellOrLabel.setAttribute('data-wall-bottom', 'true');
         miniCellOrLabel.setAttribute('data-wall-bottom', 'true');
       }
-      if ((gameX === 10) && gameY === 2) {
+      if ((gameX === 10) && gameY === 3) {
         mainCellOrLabel.setAttribute('data-window-bottom', 'true');
         miniCellOrLabel.setAttribute('data-window-bottom', 'true');
       }
@@ -398,7 +398,7 @@ window.addEventListener('load', function() {
         mainCellOrLabel.setAttribute('data-wall-bottom', 'true');
         miniCellOrLabel.setAttribute('data-wall-bottom', 'true');
       }
-      if ((gameX === 3  || gameX === 6) && gameY === 6) {
+      if ((gameX === 3  || gameX === 6) && gameY === 5) {
         mainCellOrLabel.setAttribute('data-window-bottom', 'true');
         miniCellOrLabel.setAttribute('data-window-bottom', 'true');
       }      
